@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm rounded-pill px-4 py-2 d-flex flex-row justify-content-between align-items-center mb-4 bg-white"
+         style="overflow: visible !important; z-index: 1060; position: relative;">
+
+        <div class="d-flex align-items-center">
+            <div class="me-4">
+                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Target Year:</span>
+                <span class="fw-bold ms-2 text-primary">{{ session.target_year }}</span>
+            </div>
+            <div class="vr mx-2 text-light" style="height: 20px;"></div>
+            <div class="ms-4">
+                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Production:</span>
+                <span class="fw-bold ms-2 text-primary">{{ "{:,}".format(session.target_prod) }}</span>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-dark dropdown-toggle rounded-pill px-3 fw-bold"
+                    type="button"
+                    id="scopeSwitcher"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                Switch Scope
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 py-2 mt-2"
+                aria-labelledby="scopeSwitcher"
+                style="z-index: 1070; min-width: 200px;">
+                <li><a class="dropdown-item py-2" href="/dashboard/scope1">Scope 1: Direct</a></li>
+                <li><a class="dropdown-item py-2" href="/dashboard/scope2">Scope 2: Energy</a></li>
+                <li><a class="dropdown-item py-2" href="/dashboard/scope3">Scope 3: Value Chain</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item py-2 text-danger fw-bold" href="/dashboard/reset">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Reset Project
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    {% block scope_content %}{% endblock %}
+</div>
+
+<style>
+    .dropdown-menu {
+        margin-top: 10px !important;
+        border: 1px solid rgba(0,0,0,.05) !important;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    .dropdown-item:active {
+        background-color: #17a2b8 !important;
+    }
+</style>
+{% endblock %}

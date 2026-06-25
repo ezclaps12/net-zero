@@ -1,0 +1,13 @@
+# Ignore the virtual environment folder at the root
+.venv/
+venv/
+
+# Ignore your heavy fleet and emissions data tracking sheets
+net0/data/*.csv
+
+# PyCharm configuration files
+.idea/
+
+# Python cache files
+__pycache__/
+*.py[cod]

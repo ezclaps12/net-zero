@@ -1,0 +1,134 @@
+{% extends "scope_base.html" %}
+
+{% block scope_content %}
+<form method="POST">
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+                <div id="histChart" style="height: 350px;"></div>
+            </div>
+
+            {% if s1_bau_json %}
+            <div class="row g-3 animate__animated animate__fadeIn">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-2">
+                        <div id="bauChart" style="height: 450px;"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-2">
+                        <div id="scenarioChart" style="height: 450px;"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 px-3 py-3 sticky-top" style="top: 20px;">
+                <h6 class="fw-bold mb-3 text-uppercase small tracking-wider">Simulation Levers</h6>
+
+                {% set sliders = [
+                    ('intensity', 'intensity', 'Intensity Reduction %'),
+                    ('therm_re', 'therm_re', 'Renewable Thermal %'),
+                    ('elec', 'elec', 'Electrification %'),
+                    ('refr_growth', 'refr_growth', 'Refr. Growth Rate %'),
+                    ('refr_red', 'refr_red', 'Refr. Leakage Red. %')
+                ] %}
+
+                {% for key, name, label in sliders %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <label class="form-label mb-0" style="font-size: 0.75rem;">{{ label }}</label>
+                        <span class="text-primary fw-bold" style="font-size: 0.75rem;" id="val-{{ name }}">
+                            {{ form_data.get(name, 0) }}%
+                        </span>
+                    </div>
+                    <input type="range" name="{{ name }}" class="form-range custom-range" min="0" max="100"
+                           value="{{ form_data.get(name, 0) }}"
+                           oninput="document.getElementById('val-{{ name }}').innerText = this.value + '%'">
+                </div>
+                {% endfor %}
+
+                <div class="mt-3 pt-2 border-top">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small">Fuel Switches</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" style="font-size: 0.7rem;" onclick="addFuelRow()">
+                            + Add
+                        </button>
+                    </div>
+
+                    <div id="fuelContainer">
+                        {% if form_data.f_from %}
+                            {% for i in range(form_data.f_from|length) %}
+                            <div class="row g-1 mb-1 align-items-center fuel-row">
+                                <div class="col-4">
+                                    <select name="f_from[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">
+                                        {% for fuel in ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"] %}
+                                        <option value="{{ fuel }}" {% if form_data.f_from[i] == fuel %}selected{% endif %}>{{ fuel }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-1 text-center small text-muted">→</div>
+                                <div class="col-4">
+                                    <select name="f_to[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">
+                                        {% for fuel in ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"] %}
+                                        <option value="{{ fuel }}" {% if form_data.f_to[i] == fuel %}selected{% endif %}>{{ fuel }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-2">
+                                    <input type="number" name="f_val[]" class="form-control form-control-sm py-0 border-0 bg-light"
+                                           style="font-size: 0.7rem;" value="{{ form_data.f_val[i] }}" placeholder="%">
+                                </div>
+                                <div class="col-1 text-end">
+                                    <button type="button" class="btn-close" style="font-size: 0.5rem;" onclick="this.parentElement.parentElement.remove()"></button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-dark w-100 rounded-pill mt-3 py-1 fw-bold small">
+                    RUN SIMULATION
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script>
+    Plotly.newPlot('histChart', {{ hist_json | safe }}.data, {{ hist_json | safe }}.layout, {responsive: true, displayModeBar: false});
+
+    {% if s1_bau_json %}
+        Plotly.newPlot('bauChart', {{ s1_bau_json | safe }}.data, {{ s1_bau_json | safe }}.layout, {responsive: true});
+        Plotly.newPlot('scenarioChart', {{ s1_scenario_json | safe }}.data, {{ s1_scenario_json | safe }}.layout, {responsive: true});
+    {% endif %}
+
+    const fuels = ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"];
+    function addFuelRow() {
+        const container = document.getElementById('fuelContainer');
+        const div = document.createElement('div');
+        div.className = "row g-1 mb-1 align-items-center";
+        let opts = fuels.map(f => `<option value="${f}">${f}</option>`).join('');
+        div.innerHTML = `
+            <div class="col-4"><select name="f_from[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">${opts}</select></div>
+            <div class="col-1 text-center small text-muted">→</div>
+            <div class="col-4"><select name="f_to[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">${opts}</select></div>
+            <div class="col-2"><input type="number" name="f_val[]" class="form-control form-control-sm py-0 border-0 bg-light" style="font-size: 0.7rem;" placeholder="%"></div>
+            <div class="col-1 text-end"><button type="button" class="btn-close" style="font-size: 0.5rem;" onclick="this.parentElement.parentElement.remove()"></button></div>
+        `;
+        container.appendChild(div);
+    }
+</script>
+
+<style>
+    /* Compact range slider styling */
+    .form-range { height: 1rem; }
+    .form-range::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -4px; background: #17a2b8; }
+    .form-range::-webkit-slider-runnable-track { height: 4px; }
+</style>
+{% endblock %}

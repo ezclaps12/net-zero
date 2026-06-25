@@ -1,0 +1,71 @@
+{% extends "scope_base.html" %}
+
+{% block scope_content %}
+<form method="POST">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+                <div id="histChart" style="height: 350px;"></div>
+            </div>
+
+            {% if s2_bau_json %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-2">
+                        <div id="bauChart" style="height: 450px;"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-2">
+                        <div id="scenarioChart" style="height: 450px;"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 20px;">
+                <h5 class="fw-bold mb-4 small text-uppercase">Scope 2 Levers</h5>
+
+                {% set sliders = [
+                    ('intensity', 'intensity', 'Electricity Intensity Red. %'),
+                    ('renewable', 'renewable', 'Renewable Energy Increase %'),
+                    ('grid_ef', 'grid_ef', 'Grid Emission Factor Red. %')
+                ] %}
+
+                {% for key, name, label in sliders %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <label class="form-label small fw-bold text-secondary">{{ label }}</label>
+                        <span class="text-primary small fw-bold" id="val-{{ name }}">
+                            {{ form_data.get(name, 0) }}%
+                        </span>
+                    </div>
+                    <input type="range" name="{{ name }}" class="form-range" min="0" max="100"
+                           value="{{ form_data.get(name, 0) }}"
+                           oninput="document.getElementById('val-{{ name }}').innerText = this.value + '%'">
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-info border-0 rounded-4 small py-2 mt-3" style="font-size: 0.75rem;">
+                    <i class="bi bi-info-circle me-2"></i>Note: Electricity demand accounts for electrification switches made in Scope 1.
+                </div>
+
+                <button type="submit" class="btn btn-dark w-100 rounded-pill mt-4 py-2 fw-bold shadow-sm">
+                    RUN SCOPE 2
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script>
+    Plotly.newPlot('histChart', {{ hist_json | safe }}.data, {{ hist_json | safe }}.layout, {responsive: true, displayModeBar: false});
+    {% if s2_bau_json %}
+        Plotly.newPlot('bauChart', {{ s2_bau_json | safe }}.data, {{ s2_bau_json | safe }}.layout, {responsive: true});
+        Plotly.newPlot('scenarioChart', {{ s2_scenario_json | safe }}.data, {{ s2_scenario_json | safe }}.layout, {responsive: true});
+    {% endif %}
+</script>
+{% endblock %}

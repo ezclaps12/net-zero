@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+.step-badge {
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.main-card {
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.form-control {
+    border-radius: 50px;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+}
+
+.btn-main {
+    transition: 0.3s;
+}
+
+.btn-main:hover {
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.scope-card {
+    border-radius: 20px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.scope-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.scope-icon {
+    font-size: 30px;
+}
+</style>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+
+            <!-- STEP 1 -->
+            <div class="card main-card border-0 shadow p-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold mb-0">Project Initialization</h4>
+                    <span class="step-badge">Step 1</span>
+                </div>
+
+                <p class="text-muted small mb-4">
+                    Define your simulation boundaries before analyzing emissions.
+                </p>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Target Year</label>
+                        <input type="number" name="target_year" class="form-control"
+                               value="{{ session.target_year or 2030 }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">Production Volume</label>
+                        <input type="number" name="target_production" class="form-control"
+                               value="{{ session.target_prod or 200000 }}" required>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary w-100 btn-main fw-bold py-2">
+                        {% if session.initialized %}
+                            Update Values
+                        {% else %}
+                             Set Global Targets
+                        {% endif %}
+                    </button>
+                </form>
+
+            </div>
+
+            {% if session.initialized %}
+
+            <!-- SUCCESS BAR -->
+            <div class="mt-4 p-3 bg-white shadow-sm rounded-4 border d-flex justify-content-between align-items-center">
+                <span class="text-success fw-bold small"> Targets Locked</span>
+
+                <a href="/dashboard/reset" class="btn btn-outline-danger btn-sm rounded-pill">
+                    Reset
+                </a>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="mt-4">
+                <div class="card main-card border-0 shadow p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0">Choose Scope</h4>
+                        <span class="step-badge">Step 2</span>
+                    </div>
+
+                    <p class="text-muted small mb-4">
+                        Select the emission scope to configure and simulate scenarios.
+                    </p>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <a href="/dashboard/scope1" class="text-decoration-none">
+                                <div class="card scope-card p-3 text-center border-0 shadow-sm">
+                                    <div class="scope-icon text-danger">
+                                        <i class="bi bi-fire"></i>
+                                    </div>
+                                    <h6 class="fw-bold mt-2 text-dark">Scope 1</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-md-4">
+                            <a href="/dashboard/scope2" class="text-decoration-none">
+                                <div class="card scope-card p-3 text-center border-0 shadow-sm">
+                                    <div class="scope-icon text-primary">
+                                        <i class="bi bi-lightning-charge"></i>
+                                    </div>
+                                    <h6 class="fw-bold mt-2 text-dark">Scope 2</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-md-4">
+                            <a href="/dashboard/scope3" class="text-decoration-none">
+                                <div class="card scope-card p-3 text-center border-0 shadow-sm">
+                                    <div class="scope-icon text-success">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </div>
+                                    <h6 class="fw-bold mt-2 text-dark">Scope 3</h6>
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
