@@ -2,39 +2,40 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="card border-0 shadow-sm rounded-pill px-4 py-2 d-flex flex-row justify-content-between align-items-center mb-4 bg-white"
-         style="overflow: visible !important; z-index: 1060; position: relative;">
+    <div class="card border-0 glass-card px-4 py-3 d-flex flex-row justify-content-between align-items-center mb-4"
+         style="overflow: visible !important; z-index: 1060; position: relative; border-radius: 50px;">
 
         <div class="d-flex align-items-center">
             <div class="me-4">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Target Year:</span>
-                <span class="fw-bold ms-2 text-primary">{{ session.target_year }}</span>
+                <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Target Year:</span>
+                <span class="fw-bold ms-2 text-dark" style="color: #0f172a;">{{ session.target_year }}</span>
             </div>
-            <div class="vr mx-2 text-light" style="height: 20px;"></div>
+            <div class="vr mx-2 bg-secondary" style="height: 20px; opacity: 0.2;"></div>
             <div class="ms-4">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Production:</span>
-                <span class="fw-bold ms-2 text-primary">{{ "{:,}".format(session.target_prod) }}</span>
+                <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Production:</span>
+                <span class="fw-bold ms-2 text-dark" style="color: #0f172a;">{{ "{:,}".format(session.target_prod) }}</span>
             </div>
         </div>
 
         <div class="dropdown">
-            <button class="btn btn-sm btn-outline-dark dropdown-toggle rounded-pill px-3 fw-bold"
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-4 py-2 fw-bold"
                     type="button"
                     id="scopeSwitcher"
                     data-bs-toggle="dropdown"
-                    aria-expanded="false">
+                    aria-expanded="false"
+                    style="color: #334155; border-color: #cbd5e1; font-size: 0.85rem; background: #ffffff;">
                 Switch Scope
             </button>
 
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 py-2 mt-2"
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-2 mt-2"
                 aria-labelledby="scopeSwitcher"
-                style="z-index: 1070; min-width: 200px;">
-                <li><a class="dropdown-item py-2" href="/dashboard/scope1">Scope 1: Direct</a></li>
-                <li><a class="dropdown-item py-2" href="/dashboard/scope2">Scope 2: Energy</a></li>
-                <li><a class="dropdown-item py-2" href="/dashboard/scope3">Scope 3: Value Chain</a></li>
-                <li><hr class="dropdown-divider"></li>
+                style="z-index: 1070; min-width: 220px; background: #ffffff; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                <li><a class="dropdown-item py-2 text-secondary hover-text-dark" href="/dashboard/scope1" style="font-size: 0.9rem;">Scope 1: Direct</a></li>
+                <li><a class="dropdown-item py-2 text-secondary hover-text-dark" href="/dashboard/scope2" style="font-size: 0.9rem;">Scope 2: Energy</a></li>
+                <li><a class="dropdown-item py-2 text-secondary hover-text-dark" href="/dashboard/scope3" style="font-size: 0.9rem;">Scope 3: Value Chain</a></li>
+                <li><hr class="dropdown-divider bg-secondary" style="opacity: 0.1;"></li>
                 <li>
-                    <a class="dropdown-item py-2 text-danger fw-bold" href="/dashboard/reset">
+                    <a class="dropdown-item py-2 text-danger fw-bold" href="/dashboard/reset" style="font-size: 0.9rem;">
                         <i class="bi bi-arrow-clockwise me-2"></i>Reset Project
                     </a>
                 </li>
@@ -48,13 +49,23 @@
 <style>
     .dropdown-menu {
         margin-top: 10px !important;
-        border: 1px solid rgba(0,0,0,.05) !important;
+    }
+    .dropdown-item {
+        color: #475569 !important;
+        transition: all 0.15s ease;
     }
     .dropdown-item:hover {
-        background-color: #f8f9fa;
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
     }
-    .dropdown-item:active {
-        background-color: #17a2b8 !important;
+    .dropdown-item.text-danger:hover {
+        background-color: rgba(239, 68, 68, 0.05) !important;
+        color: #ef4444 !important;
+    }
+    .btn-outline-secondary:hover {
+        background: #0f172a !important;
+        border-color: #0f172a !important;
+        color: white !important;
     }
 </style>
 {% endblock %}

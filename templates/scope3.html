@@ -5,63 +5,71 @@
     <div class="row g-4">
 
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 text-center bg-white border-start border-info border-5">
-                <h6 class="text-muted mb-0 fw-bold">Scope 3: Value Chain Carbon Forecast</h6>
-                <small class="text-secondary">Visualizing the impact of supply chain and product-use decarbonization</small>
+            <div class="card border-0 glass-card p-4 mb-4 text-center border-start border-5" style="border-left: 5px solid #475569 !important;">
+                <h6 class="mb-1 fw-bold text-dark" style="font-size: 1.1rem; color: #0f172a;">Scope 3: Value Chain Carbon Forecast</h6>
+                <small class="text-secondary" style="color: #64748b !important;">Visualizing the impact of supply chain and product-use decarbonization</small>
             </div>
 
             {% if s3_bau_json %}
-            <div class="row g-3 animate__animated animate__fadeIn">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 p-2">
-                        <div id="bauChart" style="height: 500px;"></div>
+                    <div class="card border-0 glass-card p-3">
+                        <div id="bauChart" style="height: 450px;"></div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 p-2">
-                        <div id="sceneChart" style="height: 500px;"></div>
+                    <div class="card border-0 glass-card p-3">
+                        <div id="sceneChart" style="height: 450px;"></div>
                     </div>
                 </div>
             </div>
             {% else %}
-            <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white" style="min-height: 400px; display: flex; justify-content: center;">
+            <div class="card border-0 glass-card p-5 text-center" style="min-height: 400px; display: flex; justify-content: center; align-items: center;">
                 <div>
-                    <i class="bi bi-truck-flatbed text-light mb-3" style="font-size: 4rem;"></i>
-                    <h5 class="text-secondary">No Simulation Results Yet</h5>
-                    <p class="text-muted small">Select categories on the right and click "Run" to see the impact.</p>
+                    <i class="bi bi-truck-flatbed text-secondary mb-3" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <h5 class="text-secondary fw-bold">No Simulation Results Yet</h5>
+                    <p class="text-secondary small">Select categories on the right and click "Run Simulation" to see the impact.</p>
                 </div>
             </div>
             {% endif %}
         </div>
 
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 sticky-top bg-white" style="top: 20px;">
+            <div class="card border-0 glass-card p-3 sticky-top" style="top: 20px;">
                 <h6 class="fw-bold mb-3 text-uppercase small tracking-wider text-secondary">Scope 3 Categories</h6>
 
-                <div class="accordion accordion-flush shadow-sm rounded-3 overflow-hidden border" id="catAccordion">
+                <div class="accordion accordion-flush rounded-3 overflow-hidden border" id="catAccordion" style="border-color: #e2e8f0 !important;">
 
                     {% macro standard_cat(cid, name) %}
-                    <div class="accordion-item border-bottom">
+                    <div class="accordion-item border-bottom" style="background: transparent; border-bottom-color: #e2e8f0 !important;">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{cid}}">
-                                <input type="checkbox" name="cat{{cid}}_enabled" class="form-check-input me-2"
+                            <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{cid}}" style="background: transparent; box-shadow: none;">
+                                <input type="checkbox" name="cat{{cid}}_enabled" class="form-check-input me-3"
                                        {% if form_data.get('cat'+cid|string+'_enabled') %}checked{% endif %}>
-                                <span class="small fw-bold text-dark">{{ name }}</span>
+                                <span class="small fw-bold">{{ name }}</span>
                             </button>
                         </h2>
                         <div id="collapse{{cid}}" class="accordion-collapse collapse" data-bs-parent="#catAccordion">
-                            <div class="accordion-body bg-light p-3">
-                                <label class="small text-muted fw-bold mb-1">ACTIVITY REDUCTION %</label>
-                                <input type="range" name="cat{{cid}}_act" class="form-range" min="0" max="100"
-                                       value="{{ form_data.get('cat'+cid|string+'_act', 0) }}"
-                                       oninput="this.nextElementSibling.innerText = this.value + '%'">
-                                <div class="text-end small text-primary fw-bold mb-2">{{ form_data.get('cat'+cid|string+'_act', 0) }}%</div>
+                            <div class="accordion-body p-3" style="background: #f8fafc;">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <label class="small text-secondary fw-bold mb-0" style="font-size: 0.65rem;">ACTIVITY REDUCTION %</label>
+                                        <span class="fw-bold small" style="font-size: 0.65rem; color: #475569;">{{ form_data.get('cat'+cid|string+'_act', 0) }}%</span>
+                                    </div>
+                                    <input type="range" name="cat{{cid}}_act" class="form-range custom-range" min="0" max="100"
+                                           value="{{ form_data.get('cat'+cid|string+'_act', 0) }}"
+                                           oninput="this.previousElementSibling.firstElementChild.nextElementSibling.innerText = this.value + '%'">
+                                </div>
 
-                                <label class="small text-muted fw-bold mb-1">EFFICIENCY IMPROVEMENT %</label>
-                                <input type="range" name="cat{{cid}}_ef" class="form-range" min="0" max="100"
-                                       value="{{ form_data.get('cat'+cid|string+'_ef', 0) }}"
-                                       oninput="this.nextElementSibling.innerText = this.value + '%'">
-                                <div class="text-end small text-primary fw-bold">{{ form_data.get('cat'+cid|string+'_ef', 0) }}%</div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <label class="small text-secondary fw-bold mb-0" style="font-size: 0.65rem;">EFFICIENCY IMPROVEMENT %</label>
+                                        <span class="fw-bold small" style="font-size: 0.65rem; color: #475569;">{{ form_data.get('cat'+cid|string+'_ef', 0) }}%</span>
+                                    </div>
+                                    <input type="range" name="cat{{cid}}_ef" class="form-range custom-range" min="0" max="100"
+                                           value="{{ form_data.get('cat'+cid|string+'_ef', 0) }}"
+                                           oninput="this.previousElementSibling.firstElementChild.nextElementSibling.innerText = this.value + '%'">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -73,48 +81,49 @@
                     {{ standard_cat(7, "Cat 7: Employee Commute") }}
                     {{ standard_cat(9, "Cat 9: Downstream Logistics") }}
 
-                    <div class="accordion-item">
+                    <div class="accordion-item" style="background: transparent;">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse11">
-                                <input type="checkbox" name="cat11_enabled" class="form-check-input me-2"
+                            <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse11" style="background: transparent; box-shadow: none;">
+                                <input type="checkbox" name="cat11_enabled" class="form-check-input me-3"
                                        {% if form_data.get('cat11_enabled') %}checked{% endif %}>
-                                <span class="small fw-bold text-dark">Cat 11: Sold Vehicles</span>
+                                <span class="small fw-bold">Cat 11: Sold Vehicles</span>
                             </button>
                         </h2>
                         <div id="collapse11" class="accordion-collapse collapse" data-bs-parent="#catAccordion">
-                            <div class="accordion-body bg-light p-3">
+                            <div class="accordion-body p-3" style="background: #f8fafc;">
 
                                 {% macro seg_block(id_name, label_name) %}
-                                <div class="mb-4 {% if label_name != 'Trucks' %}border-bottom pb-3{% endif %}">
-                                    <label class="small fw-bold text-primary mb-1 text-uppercase" style="font-size: 0.7rem;">{{ label_name }} Segment</label>
-                                    <input type="number" name="cat11_{{ id_name }}" class="form-control form-control-sm mb-2 shadow-sm border-0"
+                                <div class="mb-4 {% if label_name != 'Trucks' %}border-bottom pb-3{% endif %}" style="border-bottom-color: #cbd5e1 !important;">
+                                    <label class="small fw-bold mb-2 text-uppercase tracking-wider" style="font-size: 0.7rem; color: #475569;">{{ label_name }} Segment</label>
+                                    <input type="number" name="cat11_{{ id_name }}" class="form-control form-control-sm mb-3 dark-input"
                                            value="{{ form_data.get('cat11_' + id_name, '') }}" placeholder="Target Units">
+                                    
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small text-muted fw-bold" style="font-size: 0.65rem;">Fuel Switches</span>
-                                        <button type="button" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size: 0.6rem;" onclick="addSegFuel('{{ id_name }}')">+ Switch</button>
+                                        <span class="small text-secondary fw-bold" style="font-size: 0.65rem;">Fuel Switches</span>
+                                        <button type="button" class="btn btn-sm btn-outline-custom py-0 px-2 fw-bold" style="font-size: 0.6rem;" onclick="addSegFuel('{{ id_name }}')">+ Switch</button>
                                     </div>
 
                                     <div id="{{ id_name }}-container">
                                         {% if form_data.get(id_name + '_from') %}
                                             {% for i in range(form_data[id_name + '_from']|length) %}
-                                            <div class="row g-1 mb-1 align-items-center animate__animated animate__fadeIn">
+                                            <div class="row g-1 mb-2 align-items-center animate__animated animate__fadeIn">
                                                 <div class="col-4">
-                                                    <select name="{{ id_name }}_from[]" class="form-select form-select-sm py-0 border-0 bg-white" style="font-size: 0.65rem;">
+                                                    <select name="{{ id_name }}_from[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.65rem;">
                                                         {% for f in ["Diesel", "LPG/CNG", "Electricity", "Hydrogen"] %}
                                                         <option value="{{ f }}" {% if form_data[id_name + '_from'][i] == f %}selected{% endif %}>{{ f }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
-                                                <div class="col-1 text-center small text-muted">→</div>
+                                                <div class="col-1 text-center small text-secondary">→</div>
                                                 <div class="col-4">
-                                                    <select name="{{ id_name }}_to[]" class="form-select form-select-sm py-0 border-0 bg-white" style="font-size: 0.65rem;">
+                                                    <select name="{{ id_name }}_to[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.65rem;">
                                                         {% for f in ["Diesel", "LPG/CNG", "Electricity", "Hydrogen"] %}
                                                         <option value="{{ f }}" {% if form_data[id_name + '_to'][i] == f %}selected{% endif %}>{{ f }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
                                                 <div class="col-2">
-                                                    <input type="number" name="{{ id_name }}_val[]" class="form-control form-control-sm py-0 border-0"
+                                                    <input type="number" name="{{ id_name }}_val[]" class="form-control form-control-sm py-1 dark-input"
                                                            style="font-size: 0.65rem;" value="{{ form_data[id_name + '_val'][i] }}">
                                                 </div>
                                                 <div class="col-1 text-end">
@@ -131,14 +140,14 @@
                                 {{ seg_block('buses', 'Buses') }}
                                 {{ seg_block('trucks', 'Trucks') }}
 
-                                <div class="mt-3 pt-3 border-top">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="small text-muted fw-bold mb-1">TOTAL VEHICLE EFFICIENCY %</label>
-                                        <span class="text-primary fw-bold small" id="val-cat11_ef">
+                                <div class="mt-3 pt-3 border-top" style="border-top-color: #cbd5e1 !important;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="small text-secondary fw-bold mb-0" style="font-size: 0.65rem;">TOTAL VEHICLE EFFICIENCY %</label>
+                                        <span class="fw-bold small" id="val-cat11_ef" style="font-size: 0.65rem; color: #475569;">
                                             {{ form_data.get('cat11_ef', 0) }}%
                                         </span>
                                     </div>
-                                    <input type="range" name="cat11_ef" class="form-range" min="0" max="100"
+                                    <input type="range" name="cat11_ef" class="form-range custom-range" min="0" max="100"
                                            value="{{ form_data.get('cat11_ef', 0) }}"
                                            oninput="document.getElementById('val-cat11_ef').innerText = this.value + '%'">
                                 </div>
@@ -147,7 +156,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-dark w-100 rounded-pill mt-4 py-2 fw-bold shadow-sm">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill mt-4 py-2 fw-bold cta-btn">
                     RUN SIMULATION
                 </button>
             </div>
@@ -157,9 +166,53 @@
 
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <script>
+    // Custom common Plotly options for enterprise light theme
+    const commonLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'Outfit, sans-serif', color: '#475569' },
+        margin: { t: 60, r: 20, l: 65, b: 50 },
+        xaxis: {
+            gridcolor: '#f1f5f9',
+            zerolinecolor: '#e2e8f0',
+            tickmode: 'linear',
+            dtick: 1,
+            title: { text: 'Year', font: { size: 12, color: '#94a3b8' } }
+        },
+        yaxis: {
+            gridcolor: '#f1f5f9',
+            zerolinecolor: '#e2e8f0',
+            title: { text: 'Emissions (tCO2e)', font: { size: 12, color: '#94a3b8' } }
+        },
+        hovermode: 'closest'
+    };
+
     {% if s3_bau_json %}
-        Plotly.newPlot('bauChart', {{ s3_bau_json | safe }}.data, {{ s3_bau_json | safe }}.layout, {responsive: true, displayModeBar: false});
-        Plotly.newPlot('sceneChart', {{ s3_scenario_json | safe }}.data, {{ s3_scenario_json | safe }}.layout, {responsive: true, displayModeBar: false});
+        // Style and plot BAU emissions chart
+        let bauObj = {{ s3_bau_json | safe }};
+        let bauLayout = JSON.parse(JSON.stringify(commonLayout));
+        bauLayout.title = { text: 'Scope 3 BAU Emissions', font: { size: 15, color: '#0f172a', weight: 'bold' } };
+        if (bauObj.data) {
+            bauObj.data.forEach(trace => {
+                trace.line = { color: '#ef4444', width: 3, shape: 'spline' };
+                trace.marker = { size: 6, color: '#ef4444' };
+                trace.hovertemplate = 'Year: %{x}<br>Emissions: %{y:,.2f} tCO2e<extra></extra>';
+            });
+        }
+        Plotly.newPlot('bauChart', bauObj.data, bauLayout, {responsive: true, displayModeBar: false});
+
+        // Style and plot Scenario emissions chart
+        let sceneObj = {{ s3_scenario_json | safe }};
+        let sceneLayout = JSON.parse(JSON.stringify(commonLayout));
+        sceneLayout.title = { text: 'Scope 3 Scenario Emissions', font: { size: 15, color: '#0f172a', weight: 'bold' } };
+        if (sceneObj.data) {
+            sceneObj.data.forEach(trace => {
+                trace.line = { color: '#10b981', width: 3, shape: 'spline' };
+                trace.marker = { size: 6, color: '#10b981' };
+                trace.hovertemplate = 'Year: %{x}<br>Emissions: %{y:,.2f} tCO2e<extra></extra>';
+            });
+        }
+        Plotly.newPlot('sceneChart', sceneObj.data, sceneLayout, {responsive: true, displayModeBar: false});
     {% endif %}
 
     const s3Fuels = ["Diesel", "LPG/CNG", "Electricity", "Hydrogen"];
@@ -167,15 +220,15 @@
     function addSegFuel(seg) {
         const container = document.getElementById(`${seg}-container`);
         const div = document.createElement('div');
-        div.className = "row g-1 mb-1 align-items-center animate__animated animate__fadeInUp";
+        div.className = "row g-1 mb-2 align-items-center animate__animated animate__fadeInUp";
 
         let opts = s3Fuels.map(f => `<option value="${f}">${f}</option>`).join('');
 
         div.innerHTML = `
-            <div class="col-4"><select name="${seg}_from[]" class="form-select form-select-sm py-0 border-0 bg-white" style="font-size: 0.65rem;">${opts}</select></div>
-            <div class="col-1 text-center small text-muted">→</div>
-            <div class="col-4"><select name="${seg}_to[]" class="form-select form-select-sm py-0 border-0 bg-white" style="font-size: 0.65rem;">${opts}</select></div>
-            <div class="col-2"><input type="number" name="${seg}_val[]" class="form-control form-control-sm py-0 border-0" style="font-size: 0.65rem;" placeholder="%"></div>
+            <div class="col-4"><select name="${seg}_from[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.65rem;">${opts}</select></div>
+            <div class="col-1 text-center small text-secondary">→</div>
+            <div class="col-4"><select name="${seg}_to[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.65rem;">${opts}</select></div>
+            <div class="col-2"><input type="number" name="${seg}_val[]" class="form-control form-control-sm py-1 dark-input" style="font-size: 0.65rem;" placeholder="%"></div>
             <div class="col-1 text-end"><button type="button" class="btn-close" style="font-size: 0.4rem;" onclick="this.parentElement.parentElement.remove()"></button></div>
         `;
         container.appendChild(div);
@@ -183,8 +236,67 @@
 </script>
 
 <style>
-    .accordion-button:not(.collapsed) { background-color: #f0f9ff; color: #0369a1; }
-    .accordion-button:focus { box-shadow: none; }
-    .form-range::-webkit-slider-thumb { background: #17a2b8; }
+    .accordion-button {
+        background-color: #ffffff !important;
+        color: #334155 !important;
+    }
+    .accordion-button:not(.collapsed) {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+    .accordion-button::after {
+        filter: none;
+    }
+    .accordion-button:focus {
+        box-shadow: none !important;
+    }
+    /* Premium range slider styling - corporate look */
+    .form-range::-webkit-slider-runnable-track {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+    }
+    .form-range::-webkit-slider-thumb {
+        width: 14px;
+        height: 14px;
+        margin-top: -4px;
+        background: #0f172a;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    .dark-select {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #334155 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+    }
+    .dark-input {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #334155 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+    }
+    .btn-outline-custom {
+        color: #0369a1;
+        border-color: #cbd5e1;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .btn-outline-custom:hover {
+        background: #0f172a;
+        color: white;
+        border-color: #0f172a;
+    }
+    .cta-btn {
+        background: #0f172a;
+        border: none;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+    }
+    .cta-btn:hover {
+        background: #1e293b;
+        color: white;
+    }
 </style>
 {% endblock %}

@@ -5,20 +5,20 @@
     <div class="row g-4">
 
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+            <div class="card border-0 glass-card p-3 mb-4">
                 <div id="histChart" style="height: 350px;"></div>
             </div>
 
             {% if s1_bau_json %}
-            <div class="row g-3 animate__animated animate__fadeIn">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 p-2">
-                        <div id="bauChart" style="height: 450px;"></div>
+                    <div class="card border-0 glass-card p-3">
+                        <div id="bauChart" style="height: 400px;"></div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4 p-2">
-                        <div id="scenarioChart" style="height: 450px;"></div>
+                    <div class="card border-0 glass-card p-3">
+                        <div id="scenarioChart" style="height: 400px;"></div>
                     </div>
                 </div>
             </div>
@@ -26,8 +26,8 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 px-3 py-3 sticky-top" style="top: 20px;">
-                <h6 class="fw-bold mb-3 text-uppercase small tracking-wider">Simulation Levers</h6>
+            <div class="card border-0 glass-card px-3 py-3 sticky-top" style="top: 20px;">
+                <h6 class="fw-bold mb-3 text-uppercase small tracking-wider text-secondary">Simulation Levers</h6>
 
                 {% set sliders = [
                     ('intensity', 'intensity', 'Intensity Reduction %'),
@@ -38,10 +38,10 @@
                 ] %}
 
                 {% for key, name, label in sliders %}
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between">
-                        <label class="form-label mb-0" style="font-size: 0.75rem;">{{ label }}</label>
-                        <span class="text-primary fw-bold" style="font-size: 0.75rem;" id="val-{{ name }}">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <label class="form-label mb-0 text-secondary" style="font-size: 0.75rem;">{{ label }}</label>
+                        <span class="fw-bold" style="font-size: 0.75rem; color: #475569;" id="val-{{ name }}">
                             {{ form_data.get(name, 0) }}%
                         </span>
                     </div>
@@ -51,39 +51,39 @@
                 </div>
                 {% endfor %}
 
-                <div class="mt-3 pt-2 border-top">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-bold small">Fuel Switches</span>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2" style="font-size: 0.7rem;" onclick="addFuelRow()">
-                            + Add
+                <div class="mt-3 pt-3 border-top" style="border-top-color: #e2e8f0 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold small text-secondary">Fuel Switches</span>
+                        <button type="button" class="btn btn-sm btn-outline-custom rounded-pill py-1 px-3 fw-bold" style="font-size: 0.7rem;" onclick="addFuelRow()">
+                            + Add Switch
                         </button>
                     </div>
 
                     <div id="fuelContainer">
                         {% if form_data.f_from %}
                             {% for i in range(form_data.f_from|length) %}
-                            <div class="row g-1 mb-1 align-items-center fuel-row">
+                            <div class="row g-1 mb-2 align-items-center fuel-row">
                                 <div class="col-4">
-                                    <select name="f_from[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">
+                                    <select name="f_from[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.75rem;">
                                         {% for fuel in ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"] %}
                                         <option value="{{ fuel }}" {% if form_data.f_from[i] == fuel %}selected{% endif %}>{{ fuel }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-1 text-center small text-muted">→</div>
+                                <div class="col-1 text-center small text-secondary">→</div>
                                 <div class="col-4">
-                                    <select name="f_to[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">
+                                    <select name="f_to[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.75rem;">
                                         {% for fuel in ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"] %}
                                         <option value="{{ fuel }}" {% if form_data.f_to[i] == fuel %}selected{% endif %}>{{ fuel }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-2">
-                                    <input type="number" name="f_val[]" class="form-control form-control-sm py-0 border-0 bg-light"
-                                           style="font-size: 0.7rem;" value="{{ form_data.f_val[i] }}" placeholder="%">
+                                    <input type="number" name="f_val[]" class="form-control form-control-sm py-1 dark-input"
+                                           style="font-size: 0.75rem;" value="{{ form_data.f_val[i] }}" placeholder="%">
                                 </div>
                                 <div class="col-1 text-end">
-                                    <button type="button" class="btn-close" style="font-size: 0.5rem;" onclick="this.parentElement.parentElement.remove()"></button>
+                                    <button type="button" class="btn-close" style="font-size: 0.6rem;" onclick="this.parentElement.parentElement.remove()"></button>
                                 </div>
                             </div>
                             {% endfor %}
@@ -91,7 +91,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-dark w-100 rounded-pill mt-3 py-1 fw-bold small">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill mt-4 py-2 fw-bold cta-btn">
                     RUN SIMULATION
                 </button>
             </div>
@@ -101,34 +101,130 @@
 
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <script>
-    Plotly.newPlot('histChart', {{ hist_json | safe }}.data, {{ hist_json | safe }}.layout, {responsive: true, displayModeBar: false});
+    // Custom common Plotly options for enterprise light theme
+    const commonLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'Outfit, sans-serif', color: '#475569' },
+        margin: { t: 60, r: 20, l: 65, b: 50 },
+        xaxis: {
+            gridcolor: '#f1f5f9',
+            zerolinecolor: '#e2e8f0',
+            tickmode: 'linear',
+            dtick: 1,
+            title: { text: 'Year', font: { size: 12, color: '#94a3b8' } }
+        },
+        yaxis: {
+            gridcolor: '#f1f5f9',
+            zerolinecolor: '#e2e8f0',
+            title: { font: { size: 12, color: '#94a3b8' } }
+        },
+        hovermode: 'closest'
+    };
+
+    // Style and plot historical chart
+    let histObj = {{ hist_json | safe }};
+    let histLayout = JSON.parse(JSON.stringify(commonLayout));
+    histLayout.title = { text: 'Historical Thermal Energy Consumption', font: { size: 15, color: '#0f172a', weight: 'bold' } };
+    histLayout.yaxis.title.text = 'Total Energy (tOE)';
+    if (histObj.data && histObj.data[0]) {
+        histObj.data[0].line = { color: '#0284c7', width: 3, shape: 'spline' };
+        histObj.data[0].marker = { size: 8, color: '#0284c7', symbol: 'circle' };
+        histObj.data[0].hovertemplate = 'Year: %{x}<br>Energy: %{y:,.0f} tOE<extra></extra>';
+    }
+    Plotly.newPlot('histChart', histObj.data, histLayout, {responsive: true, displayModeBar: false});
 
     {% if s1_bau_json %}
-        Plotly.newPlot('bauChart', {{ s1_bau_json | safe }}.data, {{ s1_bau_json | safe }}.layout, {responsive: true});
-        Plotly.newPlot('scenarioChart', {{ s1_scenario_json | safe }}.data, {{ s1_scenario_json | safe }}.layout, {responsive: true});
+        // Style and plot BAU emissions chart
+        let bauObj = {{ s1_bau_json | safe }};
+        let bauLayout = JSON.parse(JSON.stringify(commonLayout));
+        bauLayout.title = { text: 'BAU Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
+        bauLayout.yaxis.title.text = 'Emissions (tCO2e)';
+        if (bauObj.data && bauObj.data[0]) {
+            bauObj.data[0].line = { color: '#ef4444', width: 3, shape: 'spline' };
+            bauObj.data[0].marker = { size: 6, color: '#ef4444' };
+            bauObj.data[0].hovertemplate = 'Year: %{x}<br>Emissions: %{y:,.2f} tCO2e<extra></extra>';
+        }
+        Plotly.newPlot('bauChart', bauObj.data, bauLayout, {responsive: true, displayModeBar: false});
+
+        // Style and plot Scenario emissions chart
+        let sceneObj = {{ s1_scenario_json | safe }};
+        let sceneLayout = JSON.parse(JSON.stringify(commonLayout));
+        sceneLayout.title = { text: 'Scenario Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
+        sceneLayout.yaxis.title.text = 'Emissions (tCO2e)';
+        if (sceneObj.data && sceneObj.data[0]) {
+            sceneObj.data[0].line = { color: '#10b981', width: 3, shape: 'spline' };
+            sceneObj.data[0].marker = { size: 6, color: '#10b981' };
+            sceneObj.data[0].hovertemplate = 'Year: %{x}<br>Emissions: %{y:,.2f} tCO2e<extra></extra>';
+        }
+        Plotly.newPlot('scenarioChart', sceneObj.data, sceneLayout, {responsive: true, displayModeBar: false});
     {% endif %}
 
     const fuels = ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"];
     function addFuelRow() {
         const container = document.getElementById('fuelContainer');
         const div = document.createElement('div');
-        div.className = "row g-1 mb-1 align-items-center";
+        div.className = "row g-1 mb-2 align-items-center animate__animated animate__fadeInUp";
         let opts = fuels.map(f => `<option value="${f}">${f}</option>`).join('');
         div.innerHTML = `
-            <div class="col-4"><select name="f_from[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">${opts}</select></div>
-            <div class="col-1 text-center small text-muted">→</div>
-            <div class="col-4"><select name="f_to[]" class="form-select form-select-sm py-0 border-0 bg-light" style="font-size: 0.7rem;">${opts}</select></div>
-            <div class="col-2"><input type="number" name="f_val[]" class="form-control form-control-sm py-0 border-0 bg-light" style="font-size: 0.7rem;" placeholder="%"></div>
-            <div class="col-1 text-end"><button type="button" class="btn-close" style="font-size: 0.5rem;" onclick="this.parentElement.parentElement.remove()"></button></div>
+            <div class="col-4"><select name="f_from[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.75rem;">${opts}</select></div>
+            <div class="col-1 text-center small text-secondary">→</div>
+            <div class="col-4"><select name="f_to[]" class="form-select form-select-sm py-1 dark-select" style="font-size: 0.75rem;">${opts}</select></div>
+            <div class="col-2"><input type="number" name="f_val[]" class="form-control form-control-sm py-1 dark-input" style="font-size: 0.75rem;" placeholder="%"></div>
+            <div class="col-1 text-end"><button type="button" class="btn-close" style="font-size: 0.6rem;" onclick="this.parentElement.parentElement.remove()"></button></div>
         `;
         container.appendChild(div);
     }
 </script>
 
 <style>
-    /* Compact range slider styling */
-    .form-range { height: 1rem; }
-    .form-range::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -4px; background: #17a2b8; }
-    .form-range::-webkit-slider-runnable-track { height: 4px; }
+    /* Premium range slider styling - corporate look */
+    .form-range::-webkit-slider-runnable-track {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+    }
+    .form-range::-webkit-slider-thumb {
+        width: 14px;
+        height: 14px;
+        margin-top: -4px;
+        background: #0f172a;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    .dark-select {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #334155 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+    }
+    .dark-input {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #334155 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+    }
+    .btn-outline-custom {
+        color: #0369a1;
+        border-color: #cbd5e1;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .btn-outline-custom:hover {
+        background: #0f172a;
+        color: white;
+        border-color: #0f172a;
+    }
+    .cta-btn {
+        background: #0f172a;
+        border: none;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+    }
+    .cta-btn:hover {
+        background: #1e293b;
+        color: white;
+    }
 </style>
 {% endblock %}
