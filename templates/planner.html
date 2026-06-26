@@ -1,0 +1,245 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- HEADER TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="color: #0f172a;">Decarbonization Planner</h4>
+            <p class="text-secondary small mb-0" style="color: #64748b !important;">
+                Schedule discrete policies and fuel-switch initiatives chronologically.
+            </p>
+        </div>
+        <div>
+            <a href="/dashboard/setup" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-bold" style="font-size: 0.85rem;">
+                <i class="bi bi-gear me-1"></i> Global Targets
+            </a>
+        </div>
+    </div>
+
+    <!-- TARGET SUMMARY CARD -->
+    <div class="card border-0 glass-card p-3 mb-4">
+        <div class="row text-center text-md-start">
+            <div class="col-md-4 mb-2 mb-md-0 border-end border-light">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Simulation Baseline</span>
+                <h5 class="fw-bold text-dark mt-1 mb-0">{{ session.baseline_year }}</h5>
+            </div>
+            <div class="col-md-4 mb-2 mb-md-0 border-end border-light">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Target Horizon Year</span>
+                <h5 class="fw-bold text-dark mt-1 mb-0">{{ target_year }}</h5>
+            </div>
+            <div class="col-md-4">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Target Production Volume</span>
+                <h5 class="fw-bold text-dark mt-1 mb-0">{{ "{:,}".format(target_prod) }} Units</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- ADD INITIATIVE PANEL -->
+        <div class="col-lg-5">
+            <div class="card border-0 glass-card p-4">
+                <h6 class="fw-bold mb-3" style="color: #0f172a;">Create New Decarbonization Initiative</h6>
+                <form method="POST" id="initForm">
+                    <input type="hidden" name="action" value="add_init">
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Initiative Name</label>
+                        <input type="text" name="init_name" class="form-control" placeholder="e.g. Forklift Electrification" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Target Scope</label>
+                            <select name="init_scope" id="initScope" class="form-select" onchange="toggleInitiativeFields()">
+                                <option value="Scope 1">Scope 1 (Direct)</option>
+                                <option value="Scope 2">Scope 2 (Electricity)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Implementation Year</label>
+                            <input type="number" name="init_year" class="form-control" min="{{ session.baseline_year + 1 }}" max="{{ target_year }}" value="{{ session.baseline_year + 1 }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Initiative Type</label>
+                        <select name="init_type" id="initType" class="form-select" onchange="toggleInitiativeFields()">
+                            <!-- Scope 1 Types -->
+                            <option value="fuel_switch" class="s1-option">Fuel Switch Conversion</option>
+                            <option value="energy_saving" class="s1-option">Energy Efficiency Saving</option>
+                            <option value="renewable_thermal" class="s1-option">Renewable Thermal Integration</option>
+                            <!-- Scope 2 Types -->
+                            <option value="renewable_addition" class="s2-option d-none">Renewable Grid Procurement (PPA)</option>
+                            <option value="electricity_saving" class="s2-option d-none">Electricity Consumption Saving</option>
+                        </select>
+                    </div>
+
+                    <!-- FUEL SWITCH SELECTORS -->
+                    <div id="fuelSwitchGroup" class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Switch From</label>
+                            <select name="init_fuel_from" class="form-select">
+                                <option value="HSD">Diesel (HSD)</option>
+                                <option value="CNG">CNG</option>
+                                <option value="LPG">LPG</option>
+                                <option value="Propane">Propane</option>
+                                <option value="DA">LDO (DA)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Switch To</label>
+                            <select name="init_fuel_to" class="form-select">
+                                <option value="Electricity">Electricity</option>
+                                <option value="HSD">Diesel (HSD)</option>
+                                <option value="CNG">CNG</option>
+                                <option value="LPG">LPG</option>
+                                <option value="Propane">Propane</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary text-uppercase" id="valueLabel" style="font-size: 0.65rem;">Savings / Switch Percentage (%)</label>
+                        <div class="input-group">
+                            <input type="number" step="any" name="init_value" class="form-control" placeholder="e.g. 15" required min="0" max="100">
+                            <span class="input-group-text bg-light border">%</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold">
+                        Add Initiative to Plan
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ACTIVE INITIATIVES LIST -->
+        <div class="col-lg-7">
+            <div class="card border-0 glass-card p-4">
+                <h6 class="fw-bold mb-3" style="color: #0f172a;">Plan Timeline & Initiatives Schedule</h6>
+                
+                {% if initiatives %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Initiative Name</th>
+                                    <th>Scope</th>
+                                    <th>Year</th>
+                                    <th>Type</th>
+                                    <th>Target Value</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for init in initiatives %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ init.name }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill {% if init.scope == 'Scope 1' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}" style="font-size: 0.65rem; padding: 4px 8px;">
+                                            {{ init.scope }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold text-dark">{{ init.year }}</td>
+                                    <td>{{ init.type|replace('_', ' ')|title }}</td>
+                                    <td class="text-success fw-bold">
+                                        {% if init.type == 'fuel_switch' %}
+                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ init.value }}%)
+                                        {% else %}
+                                            {{ init.value }}% reduction
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="POST">
+                                            <input type="hidden" name="action" value="delete_init">
+                                            <input type="hidden" name="init_idx" value="{{ loop.index0 }}">
+                                            <button type="submit" class="btn btn-link text-danger p-0" title="Delete Initiative">
+                                                <i class="bi bi-trash3" style="font-size: 1.1rem;"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-event text-secondary mb-3" style="font-size: 3rem; opacity: 0.2;"></i>
+                        <h6 class="text-secondary fw-bold">Timeline is Empty</h6>
+                        <p class="text-secondary small mb-0">No discrete initiatives scheduled yet. Future scenarios will follow top-down slider targets.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function toggleInitiativeFields() {
+        const scopeSelect = document.getElementById('initScope');
+        const typeSelect = document.getElementById('initType');
+        const fuelGroup = document.getElementById('fuelSwitchGroup');
+        const valLabel = document.getElementById('valueLabel');
+        
+        const selectedScope = scopeSelect.value;
+        
+        // Filter options in Type dropdown based on Scope
+        const s1Options = document.querySelectorAll('.s1-option');
+        const s2Options = document.querySelectorAll('.s2-option');
+        
+        if (selectedScope === 'Scope 1') {
+            s1Options.forEach(opt => opt.classList.remove('d-none'));
+            s2Options.forEach(opt => opt.classList.add('d-none'));
+            // Reset type if it was an s2 option
+            if (typeSelect.value === 'renewable_addition' || typeSelect.value === 'electricity_saving') {
+                typeSelect.value = 'fuel_switch';
+            }
+        } else {
+            s1Options.forEach(opt => opt.classList.add('d-none'));
+            s2Options.forEach(opt => opt.classList.remove('d-none'));
+            // Reset type if it was an s1 option
+            if (typeSelect.value === 'fuel_switch' || typeSelect.value === 'energy_saving' || typeSelect.value === 'renewable_thermal') {
+                typeSelect.value = 'renewable_addition';
+            }
+        }
+
+        const selectedType = typeSelect.value;
+        
+        // Show/hide fuel switch selector group
+        if (selectedScope === 'Scope 1' && selectedType === 'fuel_switch') {
+            fuelGroup.classList.remove('d-none');
+            valLabel.innerText = "Percentage of Source Fuel Combusted to Convert (%)";
+        } else {
+            fuelGroup.classList.add('d-none');
+            
+            if (selectedType === 'energy_saving') {
+                valLabel.innerText = "Thermal Energy Efficiency Savings (%)";
+            } else if (selectedType === 'renewable_thermal') {
+                valLabel.innerText = "Renewable Thermal Replacement Share (%)";
+            } else if (selectedType === 'renewable_addition') {
+                valLabel.innerText = "Renewable Power Share Increase (%)";
+            } else if (selectedType === 'electricity_saving') {
+                valLabel.innerText = "Grid Electricity Consumption Savings (%)";
+            }
+        }
+    }
+    
+    // Initial trigger
+    toggleInitiativeFields();
+</script>
+
+<style>
+.bg-danger-subtle {
+    background-color: #ffe4e6 !important;
+}
+.bg-primary-subtle {
+    background-color: #dbeafe !important;
+}
+</style>
+{% endblock %}

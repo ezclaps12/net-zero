@@ -9,7 +9,7 @@ from net0.scope.scope3.cat9 import Cat9Downstream
 from net0.scope.scope3.cat11 import Cat11SoldVehicles
 
 
-def run_scope3(target_year, target_production, all_inputs):
+def run_scope3(target_year, target_production, all_inputs, baseline_year=2024):
     available_cats = {
         4: Cat4Upstream, 5: Cat5Waste, 6: Cat6Business,
         7: Cat7Commute, 9: Cat9Downstream, 11: Cat11SoldVehicles
@@ -23,6 +23,7 @@ def run_scope3(target_year, target_production, all_inputs):
         if cat_id in available_cats:
             cat_obj = available_cats[cat_id]()
             raw_data = cat_obj.load_data()
+            raw_data = raw_data[raw_data["Year"] <= baseline_year].copy()
 
             if cat_id == 11:
                 bau_sliders = {

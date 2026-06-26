@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- HEADER TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="color: #0f172a;">Consolidated ESG Dashboard</h4>
+            <p class="text-secondary small mb-0" style="color: #64748b !important;">
+                High-fidelity overview of emissions pathways across Scopes 1, 2, and 3.
+            </p>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Baseline Year:</span>
+                <span class="badge bg-secondary rounded-pill px-3 py-1 ms-1 text-white" style="font-size: 0.8rem; background-color: #64748b !important;">{{ session.baseline_year }}</span>
+            </div>
+            <div>
+                <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Target Year:</span>
+                <span class="badge bg-primary rounded-pill px-3 py-1 ms-1 text-white" style="font-size: 0.8rem; background-color: #0f172a !important;">{{ session.target_year }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="row g-3 mb-4">
+        <!-- CARD 1 -->
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 h-100">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Baseline Emissions</span>
+                <h3 class="fw-bold mt-2 mb-1" style="color: #0f172a;">{{ "{:,.1f}".format(base_emissions) }}</h3>
+                <span class="text-secondary small">tCO2e in Year {{ session.baseline_year }}</span>
+            </div>
+        </div>
+        <!-- CARD 2 -->
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 h-100">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Scenario Target Emissions</span>
+                <h3 class="fw-bold mt-2 mb-1 text-success">{{ "{:,.1f}".format(target_emissions) }}</h3>
+                <span class="text-secondary small">Projected at Year {{ session.target_year }}</span>
+            </div>
+        </div>
+        <!-- CARD 3 -->
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 h-100">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">BAU Target Emissions</span>
+                <h3 class="fw-bold mt-2 mb-1 text-danger">{{ "{:,.1f}".format(target_bau) }}</h3>
+                <span class="text-secondary small">Without initiatives by {{ session.target_year }}</span>
+            </div>
+        </div>
+        <!-- CARD 4 -->
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 h-100">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Scenario Reduction</span>
+                <h3 class="fw-bold mt-2 mb-1" style="color: #10b981;">-{{ "{:.1f}".format(reduction_pct) }}%</h3>
+                <span class="text-secondary small">From baseline year</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN PATHWAY & PIE CHART ROW -->
+    <div class="row g-4 mb-4">
+        <!-- LINE CHART -->
+        <div class="col-lg-8">
+            <div class="card border-0 glass-card p-4 h-100">
+                <h6 class="fw-bold mb-3" style="color: #0f172a; font-size: 1rem;">Consolidated Decarbonization Pathway</h6>
+                <div id="consolidatedChart" style="height: 400px;"></div>
+            </div>
+        </div>
+        <!-- PIE CHART -->
+        <div class="col-lg-4">
+            <div class="card border-0 glass-card p-4 h-100">
+                <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 1rem;">Scope Contribution</h6>
+                <span class="text-secondary small mb-3">At Baseline Year ({{ session.baseline_year }})</span>
+                <div id="scopePieChart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INITIATIVES & DETAIL TABLE ROW -->
+    <div class="row g-4">
+        <!-- INITIATIVES TIMELINE -->
+        <div class="col-lg-6">
+            <div class="card border-0 glass-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">Active Initiatives ({{ session.initiatives|length }})</h6>
+                    <a href="/dashboard/planner" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold" style="font-size: 0.7rem;">Edit Planner</a>
+                </div>
+                
+                {% if session.initiatives %}
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.8rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Initiative Name</th>
+                                    <th>Scope</th>
+                                    <th>Year</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for init in session.initiatives %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ init.name }}</td>
+                                    <td>
+                                        <span class="badge rounded-pill {% if init.scope == 'Scope 1' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}" style="font-size: 0.65rem; padding: 4px 8px;">
+                                            {{ init.scope }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold text-dark">{{ init.year }}</td>
+                                    <td>{{ init.type|replace('_', ' ')|title }}</td>
+                                    <td class="text-success fw-bold">
+                                        {% if init.type == 'fuel_switch' %}
+                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ init.value }}%)
+                                        {% else %}
+                                            {{ init.value }}%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-info-circle text-secondary" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="text-secondary small mt-2 mb-0">No discrete initiatives active. Decarbonization pathway relies purely on top-down levers.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SCOPE-WISE COMPARISON TABLE -->
+        <div class="col-lg-6">
+            <div class="card border-0 glass-card p-4 h-100">
+                <h6 class="fw-bold mb-3" style="color: #0f172a;">Decarbonization Details by Scope (tCO2e)</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.8rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Reporting Scope</th>
+                                <th>Baseline ({{ session.baseline_year }})</th>
+                                <th>BAU Target ({{ session.target_year }})</th>
+                                <th class="text-success fw-bold">Scenario Target ({{ session.target_year }})</th>
+                                <th>Net Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold text-dark"><span class="badge bg-danger rounded-pill me-1" style="width: 8px; height: 8px; display: inline-block; padding: 0;"></span> Scope 1 (Direct)</td>
+                                <td class="text-dark">{{ "{:,.1f}".format(scope_data.s1.base) }}</td>
+                                <td class="text-secondary">{{ "{:,.1f}".format(scope_data.s1.bau) }}</td>
+                                <td class="text-success fw-bold">{{ "{:,.1f}".format(scope_data.s1.target) }}</td>
+                                <td class="fw-bold {% if scope_data.s1.target < scope_data.s1.base %}text-success{% else %}text-secondary{% endif %}">
+                                    {{ "{:+.1f}%".format((scope_data.s1.target - scope_data.s1.base)/scope_data.s1.base * 100) if scope_data.s1.base > 0 else "0.0%" }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold text-dark"><span class="badge bg-primary rounded-pill me-1" style="width: 8px; height: 8px; display: inline-block; padding: 0;"></span> Scope 2 (Energy)</td>
+                                <td class="text-dark">{{ "{:,.1f}".format(scope_data.s2.base) }}</td>
+                                <td class="text-secondary">{{ "{:,.1f}".format(scope_data.s2.bau) }}</td>
+                                <td class="text-success fw-bold">{{ "{:,.1f}".format(scope_data.s2.target) }}</td>
+                                <td class="fw-bold {% if scope_data.s2.target < scope_data.s2.base %}text-success{% else %}text-secondary{% endif %}">
+                                    {{ "{:+.1f}%".format((scope_data.s2.target - scope_data.s2.base)/scope_data.s2.base * 100) if scope_data.s2.base > 0 else "0.0%" }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold text-dark"><span class="badge bg-purple rounded-pill me-1" style="width: 8px; height: 8px; display: inline-block; padding: 0; background-color: #8b5cf6 !important;"></span> Scope 3 (Chain)</td>
+                                <td class="text-dark">{{ "{:,.1f}".format(scope_data.s3.base) }}</td>
+                                <td class="text-secondary">{{ "{:,.1f}".format(scope_data.s3.bau) }}</td>
+                                <td class="text-success fw-bold">{{ "{:,.1f}".format(scope_data.s3.target) }}</td>
+                                <td class="fw-bold {% if scope_data.s3.target < scope_data.s3.base %}text-success{% else %}text-secondary{% endif %}">
+                                    {{ "{:+.1f}%".format((scope_data.s3.target - scope_data.s3.base)/scope_data.s3.base * 100) if scope_data.s3.base > 0 else "0.0%" }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Plotly JS -->
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script>
+    // Draw consolidated decarb pathway chart
+    let figObj = {{ fig_json | safe }};
+    Plotly.newPlot('consolidatedChart', figObj.data, figObj.layout, {responsive: true, displayModeBar: false});
+
+    // Draw scope breakdown pie chart
+    let pieObj = {{ pie_json | safe }};
+    Plotly.newPlot('scopePieChart', pieObj.data, pieObj.layout, {responsive: true, displayModeBar: false});
+</script>
+
+<style>
+.bg-danger-subtle {
+    background-color: #ffe4e6 !important;
+}
+.bg-primary-subtle {
+    background-color: #dbeafe !important;
+}
+.progress-bar {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+{% endblock %}

@@ -98,18 +98,40 @@
                     <ul class="navbar-nav ms-auto align-items-center">
 
                         <li class="nav-item px-2">
-                            <a class="nav-link fs-5 {% if request.path == '/' %}active{% endif %}" href="/">
-                                <i class="bi bi-house me-1"></i> Home
+                            <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                                <i class="bi bi-pie-chart me-1"></i> Overview
                             </a>
                         </li>
 
                         <li class="nav-item px-2">
-                            <a class="nav-link fs-5 {% if 'dashboard' in request.path %}active{% endif %}" href="/dashboard">
-                                <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                            <a class="nav-link {% if request.path == '/dashboard/ledger' %}active{% endif %}" href="/dashboard/ledger">
+                                <i class="bi bi-table me-1"></i> Activity Ledger
                             </a>
                         </li>
 
+                        <li class="nav-item px-2">
+                            <a class="nav-link {% if request.path == '/dashboard/planner' %}active{% endif %}" href="/dashboard/planner">
+                                <i class="bi bi-sliders me-1"></i> Decarbonization Planner
+                            </a>
+                        </li>
 
+                        <!-- Scope Dropdown -->
+                        <li class="nav-item dropdown px-2">
+                            <a class="nav-link dropdown-toggle {% if 'scope' in request.path %}active{% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-box me-1"></i> Scopes Breakdown
+                            </a>
+                            <ul class="dropdown-menu border-0 shadow py-2 mt-2" aria-labelledby="navbarDropdown" style="background: #ffffff; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                                <li><a class="dropdown-item py-2" href="/dashboard/scope1" style="font-size: 0.9rem;">Scope 1: Direct</a></li>
+                                <li><a class="dropdown-item py-2" href="/dashboard/scope2" style="font-size: 0.9rem;">Scope 2: Purchased Energy</a></li>
+                                <li><a class="dropdown-item py-2" href="/dashboard/scope3" style="font-size: 0.9rem;">Scope 3: Value Chain</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item px-2 ms-3">
+                            <a class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold" href="/dashboard/reset" style="font-size: 0.75rem;">
+                                Reset
+                              </a>
+                          </li>
 
                     </ul>
                 </div>

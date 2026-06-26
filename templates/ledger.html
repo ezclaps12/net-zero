@@ -1,0 +1,235 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- TITLE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="color: #0f172a;">ESG Activity Ledger</h4>
+            <p class="text-secondary small mb-0" style="color: #64748b !important;">
+                Manage raw historical consumption data and dynamically set your Baseline Year.
+            </p>
+        </div>
+        <div>
+            <form method="POST" class="d-flex align-items-center bg-white p-2 border rounded-pill shadow-sm">
+                <input type="hidden" name="action" value="save_baseline">
+                <label class="small fw-bold text-secondary text-uppercase ms-3 me-2" style="font-size: 0.65rem;">Active Baseline Year</label>
+                <select name="baseline_year" class="form-select form-select-sm border-0 fw-bold text-dark me-2" style="width: auto; background-color: #f1f5f9; border-radius: 20px;" onchange="this.form.submit()">
+                    {% for item in ledger %}
+                    <option value="{{ item.Year }}" {% if item.Year == baseline_year %}selected{% endif %}>{{ item.Year }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW YEAR ADDER PANEL -->
+    <div class="card border-0 glass-card p-3 mb-4">
+        <form method="POST" class="row g-2 align-items-center">
+            <input type="hidden" name="action" value="add_year">
+            <div class="col-auto">
+                <span class="small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Ingest New Ledger Year</span>
+            </div>
+            <div class="col-auto">
+                <input type="number" name="new_year" class="form-control form-control-sm rounded-pill px-3" placeholder="e.g. 2025" required style="width: 120px;">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3 fw-bold">
+                    + Ingest Year
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs border-bottom mb-4" id="ledgerTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold small text-secondary" id="s1-tab" data-bs-toggle="tab" data-bs-target="#s1-pane" type="button" role="tab" aria-controls="s1-pane" aria-selected="true">
+                Scope 1: Fuels & Refrigerants
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold small text-secondary" id="s2-tab" data-bs-toggle="tab" data-bs-target="#s2-pane" type="button" role="tab" aria-controls="s2-pane" aria-selected="false">
+                Scope 2: Grid Electricity
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold small text-secondary" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-pane" type="button" role="tab" aria-controls="summary-pane" aria-selected="false">
+                Actual Emissions (AR6 Calculations)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="ledgerTabsContent">
+        
+        <!-- SCOPE 1 TAB -->
+        <div class="tab-pane fade show active" id="s1-pane" role="tabpanel" aria-labelledby="s1-tab">
+            <div class="card border-0 glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">Scope 1 Direct Energy Consumption</h6>
+                    <span class="badge bg-light text-secondary border rounded" style="font-size: 0.7rem;">AR6 Factors In-use</span>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="save_s1">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-3" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Year</th>
+                                    <th>Production (Units)</th>
+                                    <th>HSD (Liters)</th>
+                                    <th>CNG (kg)</th>
+                                    <th>LPG (kg)</th>
+                                    <th>Propane (kg)</th>
+                                    <th>DA (Liters)</th>
+                                    <th>Refrigerant (tCO2e)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in ledger %}
+                                <tr>
+                                    <td class="fw-bold text-dark">
+                                        <input type="hidden" name="s1_year[]" value="{{ item.Year }}">
+                                        {{ item.Year }}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="s1_prod[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Production }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_hsd[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.HSD_Liters }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_cng[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.CNG_kg }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_lpg[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.LPG_kg }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_prop[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Propane_kg }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_da[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.DA_Liters }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s1_refr[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Refrigerant_Emissions }}" style="font-weight: 500;">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">
+                            Save Scope 1 Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SCOPE 2 TAB -->
+        <div class="tab-pane fade" id="s2-pane" role="tabpanel" aria-labelledby="s2-tab">
+            <div class="card border-0 glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">Scope 2 Grid Electricity Ingestion</h6>
+                    <span class="badge bg-light text-secondary border rounded" style="font-size: 0.7rem;">Grid emissions factoring</span>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="save_s2">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-3" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Year</th>
+                                    <th>Production (Units)</th>
+                                    <th>Electricity Consumption (kWh)</th>
+                                    <th>Renewable Share (%)</th>
+                                    <th>Grid Emission Factor (kg CO2e/kWh)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in ledger %}
+                                <tr>
+                                    <td class="fw-bold text-dark">
+                                        <input type="hidden" name="s2_year[]" value="{{ item.Year }}">
+                                        {{ item.Year }}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="s2_prod[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Production }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s2_kwh[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Electricity_kWh }}" style="font-weight: 500;">
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="any" name="s2_re[]" class="form-control border-0 bg-light" value="{{ item.Renewable_Share }}" style="font-weight: 500;">
+                                            <span class="input-group-text border-0 bg-light small">%</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" step="any" name="s2_ef[]" class="form-control form-control-sm py-1 border-0 bg-light" value="{{ item.Grid_EF }}" style="font-weight: 500;">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">
+                            Save Scope 2 Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SUMMARY TAB -->
+        <div class="tab-pane fade" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab">
+            <div class="card border-0 glass-card p-4">
+                <h6 class="fw-bold mb-3" style="color: #0f172a;">Computed Emissions Summary (tCO2e)</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Year</th>
+                                <th>Scope 1 (Direct)</th>
+                                <th>Scope 2 (Indirect)</th>
+                                <th class="fw-bold text-dark">Total Footprint</th>
+                                <th>Normalized Intensity (kg CO2e/Vehicle)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in ledger %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ item.Year }}</td>
+                                <td class="text-danger fw-bold">{{ "{:,.2f}".format(item.s1_em) }} tCO2e</td>
+                                <td class="text-primary fw-bold">{{ "{:,.2f}".format(item.s2_em) }} tCO2e</td>
+                                <td class="text-dark fw-bold" style="font-size: 0.95rem;">{{ "{:,.2f}".format(item.total_em) }} tCO2e</td>
+                                <td>
+                                    {% if item.Production > 0 %}
+                                        {{ "{:,.2f}".format(item.total_em * 1000 / item.Production) }} kg/vehicle
+                                    {% else %}
+                                        0.00
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.Year == baseline_year %}
+                                        <span class="badge bg-dark rounded-pill px-3 py-1">Active Baseline</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">Historical</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

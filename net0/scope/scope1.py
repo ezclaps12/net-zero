@@ -7,9 +7,10 @@ import net0.core.scenario as scenario
 
 
 def run_scope1(target_year, target_production, intensity_val, therm_re_val,
-               electrification_val, refr_growth_val, refr_red_val, conversions):
+               electrification_val, refr_growth_val, refr_red_val, conversions, baseline_year=2024, initiatives=[]):
 
     df = dataloader.get_data_s1()
+    df = df[df["Year"] <= baseline_year].copy()
     df = emissions.calculate_intensity(df)
 
     intensity_slider_value = intensity_val
@@ -33,10 +34,14 @@ def run_scope1(target_year, target_production, intensity_val, therm_re_val,
 
     forecast_df["Renewable_Thermal_Energy"] = 0.0
 
-    scenario_df = scenario.apply_renewable_thermal(forecast_df, therm_renewable_slider_value)
+    # 1. Apply discrete initiatives first
+    scenario_df = scenario.apply_initiatives_s1(forecast_df, initiatives, baseline_year)
+
+    # 2. Overlay general planner sliders on top
+    scenario_df = scenario.apply_renewable_thermal(scenario_df, therm_renewable_slider_value)
     scenario_df = scenario.fuel_conversion_matrix(conversions, fuel_cols, scenario_df)
     scenario_df = scenario.apply_electrification(scenario_df, electrification_slider_value)
-    scenario_df = scenario.apply_refrigerant_reduction(df, forecast_df, refr_emission_slider_value)
+    scenario_df = scenario.apply_refrigerant_reduction(df, scenario_df, refr_emission_slider_value)
 
     combined_bau_df = pd.concat([df, bau_df], ignore_index=True)
     combined_df = pd.concat([df, scenario_df], ignore_index=True)

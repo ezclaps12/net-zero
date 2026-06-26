@@ -5,8 +5,9 @@ import net0.core.activity as activity
 import net0.core.scenario as scenario
 
 
-def run_scope2(target_year, target_production, intensity_val, renewable_val, grid_ef_val, s1=None):
+def run_scope2(target_year, target_production, intensity_val, renewable_val, grid_ef_val, s1=None, baseline_year=2024, initiatives=[]):
     df = dataloader.get_data_s2()
+    df = df[df["Year"] <= baseline_year].copy()
     df = emissions.calculate_intensity(df)
 
     intensity_slider_value = intensity_val
@@ -19,10 +20,10 @@ def run_scope2(target_year, target_production, intensity_val, renewable_val, gri
                                                 grid_ef_slider_value)
 
     if s1 is not None:
-
         s1["Electricity_Energy"] = s1["Total_Energy"] * s1["Electricity"]
+        # Make sure we only merge for the forecasted years
         forecast_df = forecast_df.merge(s1[["Year", "Electricity_Energy"]], on="Year", how="left")
-        forecast_df["Total_Energy"] += forecast_df["Electricity_Energy"]
+        forecast_df["Total_Energy"] += forecast_df["Electricity_Energy"].fillna(0)
 
     electricity_cols = ["Grid", "Renewable"]
     last_share = df.iloc[-1][electricity_cols]
@@ -30,7 +31,11 @@ def run_scope2(target_year, target_production, intensity_val, renewable_val, gri
         forecast_df[col] = last_share[col]
         bau_df[col] = last_share[col]
 
-    scenario_df = scenario.apply_renewable(forecast_df, renewable_slider_value)
+    # 1. Apply discrete initiatives
+    scenario_df = scenario.apply_initiatives_s2(forecast_df, initiatives, baseline_year)
+
+    # 2. Overlay general planner sliders
+    scenario_df = scenario.apply_renewable(scenario_df, renewable_slider_value)
 
     combined_bau_df = pd.concat([df, bau_df], ignore_index=True)
     combined_df = pd.concat([df, scenario_df], ignore_index=True)
