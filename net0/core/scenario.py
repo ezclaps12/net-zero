@@ -110,27 +110,58 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
         
         for init in year_initiatives:
             itype = init.get('type')
-            val = float(init.get('value', 0)) / 100.0
+            val = float(init.get('value', 0))
+            val_type = init.get('val_type', 'percentage')
+            
+            total_energy = forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"].values[0]
             
             if itype == 'fuel_switch':
                 fuel_from = init.get('fuel_from')
                 fuel_to = init.get('fuel_to')
                 if fuel_from in fuel_cols and fuel_to in fuel_cols:
+                    if val_type == 'absolute':
+                        fraction = val / total_energy if total_energy > 0 else 0.0
+                    else:
+                        fraction = val / 100.0
+                        
                     current_from = forecast_df.loc[forecast_df["Year"] == year, fuel_from].values[0]
-                    switch_amt = min(val, current_from)
+                    switch_amt = min(fraction, current_from)
                     forecast_df.loc[forecast_df["Year"] == year, fuel_from] -= switch_amt
                     forecast_df.loc[forecast_df["Year"] == year, fuel_to] += switch_amt
             
+            elif itype == 'capacity_expansion':
+                fuel_to = init.get('fuel_to')
+                if fuel_to in fuel_cols:
+                    new_total_energy = total_energy + val
+                    if new_total_energy > 0:
+                        for col in fuel_cols:
+                            old_share = forecast_df.loc[forecast_df["Year"] == year, col].values[0]
+                            old_energy = old_share * total_energy
+                            new_energy = old_energy + (val if col == fuel_to else 0.0)
+                            forecast_df.loc[forecast_df["Year"] == year, col] = new_energy / new_total_energy
+                        forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = new_total_energy
+            
             elif itype == 'energy_saving':
-                forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - val)
+                if val_type == 'absolute':
+                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = max(0.0, total_energy - val)
+                else:
+                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - val / 100.0)
                 
             elif itype == 'renewable_thermal':
                 thermal_cols = ["HSD", "CNG", "LPG", "Propane", "DA"]
                 thermal_total = forecast_df.loc[forecast_df["Year"] == year, thermal_cols].sum(axis=1).values[0]
                 if thermal_total > 0:
-                    renewable_energy = thermal_total * val * forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"].values[0]
+                    if val_type == 'absolute':
+                        total_thermal_energy = thermal_total * total_energy
+                        renewable_energy = min(val, total_thermal_energy)
+                        reduction_fraction = renewable_energy / total_thermal_energy if total_thermal_energy > 0 else 0.0
+                    else:
+                        fraction = val / 100.0
+                        renewable_energy = thermal_total * fraction * total_energy
+                        reduction_fraction = fraction
+                        
                     forecast_df.loc[forecast_df["Year"] == year, "Renewable_Thermal_Energy"] += renewable_energy
-                    forecast_df.loc[forecast_df["Year"] == year, thermal_cols] *= (1 - val)
+                    forecast_df.loc[forecast_df["Year"] == year, thermal_cols] *= (1 - reduction_fraction)
 
     return forecast_df
 
@@ -148,16 +179,34 @@ def apply_initiatives_s2(forecast_df, initiatives, baseline_year):
         
         for init in year_initiatives:
             itype = init.get('type')
-            val = float(init.get('value', 0)) / 100.0
+            val = float(init.get('value', 0))
+            val_type = init.get('val_type', 'percentage')
+            
+            total_energy = forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"].values[0]
             
             if itype == 'renewable_addition':
                 current_grid = forecast_df.loc[forecast_df["Year"] == year, "Grid"].values[0]
-                shift = min(val, current_grid)
+                if val_type == 'absolute':
+                    val_gj = val * 0.0036
+                    fraction = val_gj / total_energy if total_energy > 0 else 0.0
+                else:
+                    fraction = val / 100.0
+                    
+                shift = min(fraction, current_grid)
                 forecast_df.loc[forecast_df["Year"] == year, "Grid"] -= shift
                 forecast_df.loc[forecast_df["Year"] == year, "Renewable"] += shift
                 
             elif itype == 'electricity_saving':
-                forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - val)
-                
+                if val_type == 'absolute':
+                    val_gj = val * 0.0036
+                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = max(0.0, total_energy - val_gj)
+                else:
+                    fraction = val / 100.0
+                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - fraction)
+                    
+            elif itype == 'electricity_expansion':
+                val_gj = val * 0.0036
+                forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = total_energy + val_gj
+                    
     return forecast_df
 

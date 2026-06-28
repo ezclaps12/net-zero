@@ -11,3 +11,6 @@ net0/data/*.csv
 # Python cache files
 __pycache__/
 *.py[cod]
+
+# Flask server-side session files
+.flask_sessions/

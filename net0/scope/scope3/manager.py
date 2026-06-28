@@ -18,30 +18,38 @@ def run_scope3(target_year, target_production, all_inputs, baseline_year=2024):
     bau_results = []
     scenario_results = []
 
+    # Only process categories that the user has explicitly enabled/selected.
+    # Categories not in all_inputs should contribute 0 emissions.
+    if not all_inputs:
+        return pd.DataFrame(columns=["Year", "Emissions"]), pd.DataFrame(columns=["Year", "Emissions"])
 
-    for cat_id, sliders in all_inputs.items():
-        if cat_id in available_cats:
-            cat_obj = available_cats[cat_id]()
-            raw_data = cat_obj.load_data()
-            raw_data = raw_data[raw_data["Year"] <= baseline_year].copy()
+    for cat_id, cat_class in available_cats.items():
+        if cat_id not in all_inputs:
+            continue
 
-            if cat_id == 11:
-                bau_sliders = {
-                    "activity_slider_lcv": 65049,
-                    "activity_slider_buses": 21253,
-                    "activity_slider_trucks": 93540,
-                    "ef_slider": 0
-                }
-            else:
-                bau_sliders = {"activity_slider": 0, "ef_slider": 0}
+        cat_obj = cat_class()
+        raw_data = cat_obj.load_data()
+        raw_data = raw_data[raw_data["Year"] <= baseline_year].copy()
 
-            bau_df = cat_obj.apply_scenario(raw_data, target_year, bau_sliders)
-            bau_df["Category"] = cat_obj.name
-            bau_results.append(bau_df)
+        if cat_id == 11:
+            bau_sliders = {
+                "activity_slider_lcv": 65049,
+                "activity_slider_buses": 21253,
+                "activity_slider_trucks": 93540,
+                "ef_slider": 0
+            }
+        else:
+            bau_sliders = {"activity_slider": 0, "ef_slider": 0}
 
-            scenario_df = cat_obj.apply_scenario(raw_data, target_year, sliders)
-            scenario_df["Category"] = cat_obj.name
-            scenario_results.append(scenario_df)
+        bau_df = cat_obj.apply_scenario(raw_data, target_year, bau_sliders)
+        bau_df["Category"] = cat_obj.name
+        bau_results.append(bau_df)
+
+        sliders = all_inputs.get(cat_id, bau_sliders)
+
+        scenario_df = cat_obj.apply_scenario(raw_data, target_year, sliders)
+        scenario_df["Category"] = cat_obj.name
+        scenario_results.append(scenario_df)
 
     if not bau_results:
         return pd.DataFrame(columns=["Year", "Emissions"]), pd.DataFrame(columns=["Year", "Emissions"])
@@ -57,3 +65,4 @@ def run_scope3(target_year, target_production, all_inputs, baseline_year=2024):
     print(scenario_total.to_string())
 
     return bau_total, scenario_total
+

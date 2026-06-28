@@ -39,7 +39,7 @@
     <div class="row g-4">
         
         <!-- ADD INITIATIVE PANEL -->
-        <div class="col-lg-5">
+        <div class="col-lg-5 animate__animated animate__fadeInLeft" style="animation-delay: 0.1s;">
             <div class="card border-0 glass-card p-4">
                 <h6 class="fw-bold mb-3" style="color: #0f172a;">Create New Decarbonization Initiative</h6>
                 <form method="POST" id="initForm">
@@ -69,17 +69,19 @@
                         <select name="init_type" id="initType" class="form-select" onchange="toggleInitiativeFields()">
                             <!-- Scope 1 Types -->
                             <option value="fuel_switch" class="s1-option">Fuel Switch Conversion</option>
+                            <option value="capacity_expansion" class="s1-option">Capacity Expansion (New Activity)</option>
                             <option value="energy_saving" class="s1-option">Energy Efficiency Saving</option>
                             <option value="renewable_thermal" class="s1-option">Renewable Thermal Integration</option>
                             <!-- Scope 2 Types -->
                             <option value="renewable_addition" class="s2-option d-none">Renewable Grid Procurement (PPA)</option>
                             <option value="electricity_saving" class="s2-option d-none">Electricity Consumption Saving</option>
+                            <option value="electricity_expansion" class="s2-option d-none">Capacity Expansion (New Electricity Activity)</option>
                         </select>
                     </div>
 
-                    <!-- FUEL SWITCH SELECTORS -->
+                    <!-- FUEL SELECTORS -->
                     <div id="fuelSwitchGroup" class="row g-2 mb-3">
-                        <div class="col-6">
+                        <div class="col-6" id="fuelFromCol">
                             <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Switch From</label>
                             <select name="init_fuel_from" class="form-select">
                                 <option value="HSD">Diesel (HSD)</option>
@@ -89,8 +91,8 @@
                                 <option value="DA">LDO (DA)</option>
                             </select>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Switch To</label>
+                        <div class="col-6" id="fuelToCol">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" id="fuelToLabel" style="font-size: 0.65rem;">Switch To</label>
                             <select name="init_fuel_to" class="form-select">
                                 <option value="Electricity">Electricity</option>
                                 <option value="HSD">Diesel (HSD)</option>
@@ -102,11 +104,12 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-secondary text-uppercase" id="valueLabel" style="font-size: 0.65rem;">Savings / Switch Percentage (%)</label>
+                        <label class="form-label small fw-bold text-secondary text-uppercase" id="valueLabel" style="font-size: 0.65rem;">Initiative Energy Amount</label>
                         <div class="input-group">
-                            <input type="number" step="any" name="init_value" class="form-control" placeholder="e.g. 15" required min="0" max="100">
-                            <span class="input-group-text bg-light border">%</span>
+                            <input type="number" step="any" name="init_value" id="initValue" class="form-control" placeholder="e.g. 5000" required min="0">
+                            <span class="input-group-text bg-light border" id="valueUnit">GJ</span>
                         </div>
+                        <input type="hidden" name="init_val_type" value="absolute">
                     </div>
 
                     <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold">
@@ -117,7 +120,7 @@
         </div>
 
         <!-- ACTIVE INITIATIVES LIST -->
-        <div class="col-lg-7">
+        <div class="col-lg-7 animate__animated animate__fadeInRight" style="animation-delay: 0.2s;">
             <div class="card border-0 glass-card p-4">
                 <h6 class="fw-bold mb-3" style="color: #0f172a;">Plan Timeline & Initiatives Schedule</h6>
                 
@@ -147,9 +150,15 @@
                                     <td>{{ init.type|replace('_', ' ')|title }}</td>
                                     <td class="text-success fw-bold">
                                         {% if init.type == 'fuel_switch' %}
-                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ init.value }}%)
+                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ "{:,}".format(init.value|float) }} GJ)
+                                        {% elif init.type == 'capacity_expansion' %}
+                                            +{{ "{:,}".format(init.value|float) }} GJ of {{ init.fuel_to }} (Expansion)
+                                        {% elif init.type == 'electricity_expansion' %}
+                                            +{{ "{:,}".format(init.value|float) }} kWh (Electricity Expansion)
+                                        {% elif init.scope == 'Scope 1' %}
+                                            {{ "{:,}".format(init.value|float) }} GJ reduction/replacement
                                         {% else %}
-                                            {{ init.value }}% reduction
+                                            {{ "{:,}".format(init.value|float) }} kWh reduction/addition
                                         {% endif %}
                                     </td>
                                     <td>
@@ -186,6 +195,12 @@
         const typeSelect = document.getElementById('initType');
         const fuelGroup = document.getElementById('fuelSwitchGroup');
         const valLabel = document.getElementById('valueLabel');
+        const valUnit = document.getElementById('valueUnit');
+        const valInput = document.getElementById('initValue');
+        
+        const fuelFromCol = document.getElementById('fuelFromCol');
+        const fuelToCol = document.getElementById('fuelToCol');
+        const fuelToLabel = document.getElementById('fuelToLabel');
         
         const selectedScope = scopeSelect.value;
         
@@ -197,35 +212,56 @@
             s1Options.forEach(opt => opt.classList.remove('d-none'));
             s2Options.forEach(opt => opt.classList.add('d-none'));
             // Reset type if it was an s2 option
-            if (typeSelect.value === 'renewable_addition' || typeSelect.value === 'electricity_saving') {
+            if (typeSelect.value === 'renewable_addition' || typeSelect.value === 'electricity_saving' || typeSelect.value === 'electricity_expansion') {
                 typeSelect.value = 'fuel_switch';
             }
         } else {
             s1Options.forEach(opt => opt.classList.add('d-none'));
             s2Options.forEach(opt => opt.classList.remove('d-none'));
             // Reset type if it was an s1 option
-            if (typeSelect.value === 'fuel_switch' || typeSelect.value === 'energy_saving' || typeSelect.value === 'renewable_thermal') {
+            if (typeSelect.value === 'fuel_switch' || typeSelect.value === 'energy_saving' || typeSelect.value === 'renewable_thermal' || typeSelect.value === 'capacity_expansion') {
                 typeSelect.value = 'renewable_addition';
             }
         }
 
         const selectedType = typeSelect.value;
         
-        // Show/hide fuel switch selector group
-        if (selectedScope === 'Scope 1' && selectedType === 'fuel_switch') {
-            fuelGroup.classList.remove('d-none');
-            valLabel.innerText = "Percentage of Source Fuel Combusted to Convert (%)";
+        // Show/hide fuel switch selector group and update labels dynamically
+        if (selectedScope === 'Scope 1') {
+            valUnit.innerText = 'GJ';
+            valInput.placeholder = 'e.g. 5000';
+            
+            if (selectedType === 'fuel_switch') {
+                fuelGroup.classList.remove('d-none');
+                fuelFromCol.classList.remove('d-none');
+                fuelToCol.className = "col-6";
+                fuelToLabel.innerText = "Switch To";
+                valLabel.innerText = "Initiative Energy to Convert (GJ)";
+            } else if (selectedType === 'capacity_expansion') {
+                fuelGroup.classList.remove('d-none');
+                fuelFromCol.classList.add('d-none');
+                fuelToCol.className = "col-12";
+                fuelToLabel.innerText = "Fuel Type to Add";
+                valLabel.innerText = "Added Energy Quantity (GJ)";
+            } else {
+                fuelGroup.classList.add('d-none');
+                if (selectedType === 'energy_saving') {
+                    valLabel.innerText = "Thermal Energy Savings Amount (GJ)";
+                } else if (selectedType === 'renewable_thermal') {
+                    valLabel.innerText = "Renewable Thermal Replacement Amount (GJ)";
+                }
+            }
         } else {
+            valUnit.innerText = 'kWh';
+            valInput.placeholder = 'e.g. 100000';
             fuelGroup.classList.add('d-none');
             
-            if (selectedType === 'energy_saving') {
-                valLabel.innerText = "Thermal Energy Efficiency Savings (%)";
-            } else if (selectedType === 'renewable_thermal') {
-                valLabel.innerText = "Renewable Thermal Replacement Share (%)";
-            } else if (selectedType === 'renewable_addition') {
-                valLabel.innerText = "Renewable Power Share Increase (%)";
+            if (selectedType === 'renewable_addition') {
+                valLabel.innerText = "Renewable Electricity Addition (kWh)";
             } else if (selectedType === 'electricity_saving') {
-                valLabel.innerText = "Grid Electricity Consumption Savings (%)";
+                valLabel.innerText = "Electricity Savings Amount (kWh)";
+            } else if (selectedType === 'electricity_expansion') {
+                valLabel.innerText = "Added Electricity Quantity (kWh)";
             }
         }
     }

@@ -26,7 +26,7 @@
     <!-- KPI CARDS -->
     <div class="row g-3 mb-4">
         <!-- CARD 1 -->
-        <div class="col-md-3">
+        <div class="col-md-3 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
             <div class="card border-0 glass-card p-3 h-100">
                 <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Baseline Emissions</span>
                 <h3 class="fw-bold mt-2 mb-1" style="color: #0f172a;">{{ "{:,.1f}".format(base_emissions) }}</h3>
@@ -34,7 +34,7 @@
             </div>
         </div>
         <!-- CARD 2 -->
-        <div class="col-md-3">
+        <div class="col-md-3 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
             <div class="card border-0 glass-card p-3 h-100">
                 <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Scenario Target Emissions</span>
                 <h3 class="fw-bold mt-2 mb-1 text-success">{{ "{:,.1f}".format(target_emissions) }}</h3>
@@ -42,7 +42,7 @@
             </div>
         </div>
         <!-- CARD 3 -->
-        <div class="col-md-3">
+        <div class="col-md-3 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
             <div class="card border-0 glass-card p-3 h-100">
                 <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">BAU Target Emissions</span>
                 <h3 class="fw-bold mt-2 mb-1 text-danger">{{ "{:,.1f}".format(target_bau) }}</h3>
@@ -50,7 +50,7 @@
             </div>
         </div>
         <!-- CARD 4 -->
-        <div class="col-md-3">
+        <div class="col-md-3 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
             <div class="card border-0 glass-card p-3 h-100">
                 <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Scenario Reduction</span>
                 <h3 class="fw-bold mt-2 mb-1" style="color: #10b981;">-{{ "{:.1f}".format(reduction_pct) }}%</h3>
@@ -62,14 +62,14 @@
     <!-- MAIN PATHWAY & PIE CHART ROW -->
     <div class="row g-4 mb-4">
         <!-- LINE CHART -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
             <div class="card border-0 glass-card p-4 h-100">
                 <h6 class="fw-bold mb-3" style="color: #0f172a; font-size: 1rem;">Consolidated Decarbonization Pathway</h6>
                 <div id="consolidatedChart" style="height: 400px;"></div>
             </div>
         </div>
         <!-- PIE CHART -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
             <div class="card border-0 glass-card p-4 h-100">
                 <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 1rem;">Scope Contribution</h6>
                 <span class="text-secondary small mb-3">At Baseline Year ({{ session.baseline_year }})</span>
@@ -81,7 +81,7 @@
     <!-- INITIATIVES & DETAIL TABLE ROW -->
     <div class="row g-4">
         <!-- INITIATIVES TIMELINE -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 animate__animated animate__fadeInUp" style="animation-delay: 0.7s;">
             <div class="card border-0 glass-card p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold mb-0" style="color: #0f172a;">Active Initiatives ({{ session.initiatives|length }})</h6>
@@ -113,9 +113,11 @@
                                     <td>{{ init.type|replace('_', ' ')|title }}</td>
                                     <td class="text-success fw-bold">
                                         {% if init.type == 'fuel_switch' %}
-                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ init.value }}%)
+                                            {{ init.fuel_from }} → {{ init.fuel_to }} ({{ "{:,}".format(init.value|float) }} GJ)
+                                        {% elif init.scope == 'Scope 1' %}
+                                            {{ "{:,}".format(init.value|float) }} GJ
                                         {% else %}
-                                            {{ init.value }}%
+                                            {{ "{:,}".format(init.value|float) }} kWh
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -133,7 +135,7 @@
         </div>
 
         <!-- SCOPE-WISE COMPARISON TABLE -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 animate__animated animate__fadeInUp" style="animation-delay: 0.8s;">
             <div class="card border-0 glass-card p-4 h-100">
                 <h6 class="fw-bold mb-3" style="color: #0f172a;">Decarbonization Details by Scope (tCO2e)</h6>
                 <div class="table-responsive">

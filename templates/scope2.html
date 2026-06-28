@@ -1,6 +1,9 @@
 {% extends "scope_base.html" %}
 
 {% block scope_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0" style="color: #0f172a;">Scope 2: Indirect (Electricity) Emissions</h4>
+</div>
 <form method="POST">
     <div class="row g-4">
         <div class="col-lg-8">
@@ -86,7 +89,7 @@
     // Style and plot historical chart
     let histObj = {{ hist_json | safe }};
     let histLayout = JSON.parse(JSON.stringify(commonLayout));
-    histLayout.title = { text: 'Historical Electricity Consumption', font: { size: 15, color: '#0f172a', weight: 'bold' } };
+    histLayout.title = { text: 'Scope 2: Historical Electricity Consumption', font: { size: 15, color: '#0f172a', weight: 'bold' } };
     histLayout.yaxis.title.text = 'Total Energy (kWh)';
     if (histObj.data && histObj.data[0]) {
         histObj.data[0].line = { color: '#0284c7', width: 3, shape: 'spline' };
@@ -99,7 +102,7 @@
         // Style and plot BAU emissions chart
         let bauObj = {{ s2_bau_json | safe }};
         let bauLayout = JSON.parse(JSON.stringify(commonLayout));
-        bauLayout.title = { text: 'BAU Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
+        bauLayout.title = { text: 'Scope 2: BAU Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
         bauLayout.yaxis.title.text = 'Emissions (tCO2e)';
         if (bauObj.data && bauObj.data[0]) {
             bauObj.data[0].line = { color: '#ef4444', width: 3, shape: 'spline' };
@@ -111,7 +114,7 @@
         // Style and plot Scenario emissions chart
         let sceneObj = {{ s2_scenario_json | safe }};
         let sceneLayout = JSON.parse(JSON.stringify(commonLayout));
-        sceneLayout.title = { text: 'Scenario Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
+        sceneLayout.title = { text: 'Scope 2: Scenario Emissions Projection', font: { size: 13, color: '#0f172a', weight: 'bold' } };
         sceneLayout.yaxis.title.text = 'Emissions (tCO2e)';
         if (sceneObj.data && sceneObj.data[0]) {
             sceneObj.data[0].line = { color: '#10b981', width: 3, shape: 'spline' };

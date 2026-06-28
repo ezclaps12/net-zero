@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+from flask_session import Session
 import pandas as pd
 import plotly.express as px
 from net0.core.dataloader import get_data_s1, get_data_s2
@@ -8,6 +9,14 @@ from net0.scope.scope3.manager import run_scope3
 
 app = Flask(__name__)
 app.secret_key = 'ashok_leyland_net0_key'
+
+# Use server-side filesystem sessions instead of cookie-based sessions.
+# Cookie sessions have a 4KB limit which the large ledger data exceeds,
+# causing s1_inputs and s2_inputs to silently fail to persist.
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '.flask_sessions'
+app.config['SESSION_PERMANENT'] = False
+Session(app)
 
 
 def init_session_data():
@@ -98,19 +107,32 @@ def dashboard():
     if not session.get('initialized'):
         return redirect(url_for('setup_page'))
 
-    s1_p = session.get('s1_inputs', [0.0, 0.0, 0.0, 0.0, 0.0, []])
-    s2_p = session.get('s2_inputs', [0.0, 0.0, 0.0])
+    s1_p = session.get('s1_inputs')
+    s2_p = session.get('s2_inputs')
     s3_p = session.get('s3_inputs', {})
 
-    # Run s1
-    s1_bau, s1_scene = run_scope1(session['target_year'], session['target_prod'], *s1_p,
-                                  baseline_year=session.get('baseline_year', 2024),
-                                  initiatives=session.get('initiatives', []))
+    import plotly.graph_objects as go
 
-    # Run s2 (using s1_scene output for baseline electricity alignment)
-    s2_bau, s2_scene = run_scope2(session['target_year'], session['target_prod'], *s2_p, s1=s1_scene,
-                                  baseline_year=session.get('baseline_year', 2024),
-                                  initiatives=session.get('initiatives', []))
+    # Only run scope calculations if the user has explicitly configured them.
+    # Unconfigured scopes contribute 0 emissions to the dashboard.
+    years_range = list(range(session.get('baseline_year', 2024), session['target_year'] + 1))
+    empty_df = pd.DataFrame({'Year': years_range, 'Emissions': 0.0})
+
+    # Run s1 only if user has configured it
+    if s1_p is not None:
+        s1_bau, s1_scene = run_scope1(session['target_year'], session['target_prod'], *s1_p,
+                                      baseline_year=session.get('baseline_year', 2024),
+                                      initiatives=session.get('initiatives', []))
+    else:
+        s1_bau, s1_scene = empty_df.copy(), empty_df.copy()
+
+    # Run s2 only if user has configured it
+    if s2_p is not None:
+        s2_bau, s2_scene = run_scope2(session['target_year'], session['target_prod'], *s2_p, s1=s1_scene,
+                                      baseline_year=session.get('baseline_year', 2024),
+                                      initiatives=session.get('initiatives', []))
+    else:
+        s2_bau, s2_scene = empty_df.copy(), empty_df.copy()
 
     # Run s3
     s3_inputs_converted = {int(k): v for k, v in s3_p.items()}
@@ -127,13 +149,23 @@ def dashboard():
     s3_bau_clean = s3_bau[['Year', 'Emissions']].rename(columns={'Emissions': 'Scope 3'})
     s3_scene_clean = s3_scene[['Year', 'Emissions']].rename(columns={'Emissions': 'Scope 3'})
     
-    bau_merged = s1_bau_clean.merge(s2_bau_clean, on='Year').merge(s3_bau_clean, on='Year')
+    bau_merged = s1_bau_clean.merge(s2_bau_clean, on='Year', how='left')
+    if not s3_bau_clean.empty:
+        bau_merged = bau_merged.merge(s3_bau_clean, on='Year', how='left')
+    else:
+        bau_merged['Scope 3'] = 0.0
+    bau_merged = bau_merged.fillna(0.0)
     bau_merged['Total'] = bau_merged['Scope 1'] + bau_merged['Scope 2'] + bau_merged['Scope 3']
     
-    scene_merged = s1_scene_clean.merge(s2_scene_clean, on='Year').merge(s3_scene_clean, on='Year')
+    scene_merged = s1_scene_clean.merge(s2_scene_clean, on='Year', how='left')
+    if not s3_scene_clean.empty:
+        scene_merged = scene_merged.merge(s3_scene_clean, on='Year', how='left')
+    else:
+        scene_merged['Scope 3'] = 0.0
+    scene_merged = scene_merged.fillna(0.0)
     scene_merged['Total'] = scene_merged['Scope 1'] + scene_merged['Scope 2'] + scene_merged['Scope 3']
 
-    import plotly.graph_objects as go
+
     fig = go.Figure()
     
     # Net Zero Pathway lines
@@ -342,6 +374,7 @@ def planner_page():
                 'year': int(request.form.get('init_year')),
                 'type': request.form.get('init_type'),
                 'value': float(request.form.get('init_value', 0)),
+                'val_type': request.form.get('init_val_type', 'percentage'),
                 'fuel_from': request.form.get('init_fuel_from', ''),
                 'fuel_to': request.form.get('init_fuel_to', '')
             }

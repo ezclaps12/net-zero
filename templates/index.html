@@ -3,71 +3,10 @@
 {% block title %} Home - Net Zero Tool {% endblock %}
 
 {% block content %}
-<style>
-    .hero {
-        padding: 80px 30px;
-        border-radius: 20px;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
-    }
-
-    .hero-title {
-        color: #0f172a;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-
-    .glass-step-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 35px 25px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.01);
-    }
-
-    .glass-step-card:hover {
-        transform: translateY(-6px);
-        border-color: #cbd5e1;
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
-    }
-
-    .icon-box {
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 14px;
-        background: #e0f2fe;
-        color: #0369a1;
-        margin: 0 auto 20px auto;
-        font-size: 24px;
-        transition: all 0.3s ease;
-    }
-
-    .cta-btn {
-        background: #0f172a;
-        border: none;
-        color: white;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-        padding: 14px 40px !important;
-        transition: all 0.3s ease;
-    }
-
-    .cta-btn:hover {
-        background: #1e293b;
-        transform: scale(1.02);
-        color: white;
-    }
-</style>
-
 <div class="container py-4">
 
     <!-- HERO -->
-    <div class="text-center hero mb-5">
+    <div class="text-center hero mb-5 animate__animated animate__fadeInDown">
         <h1 class="display-5 hero-title mb-3">
             🌍 Net Zero Scenario Planner
         </h1>
@@ -89,7 +28,7 @@
     <div class="row g-4 text-center mt-2">
 
         <!-- CARD 1 -->
-        <div class="col-md-4">
+        <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
             <div class="glass-step-card h-100">
                 <div class="icon-box">
                     <i class="bi bi-sliders"></i>
@@ -103,9 +42,9 @@
         </div>
 
         <!-- CARD 2 -->
-        <div class="col-md-4">
+        <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
             <div class="glass-step-card h-100">
-                <div class="icon-box" style="background: #dcfce7; color: #15803d;">
+                <div class="icon-box" style="background: #dcfce7; color: #15803d; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.1);">
                     <i class="bi bi-lightning-charge"></i>
                 </div>
                 <h5 class="fw-bold mb-3 text-dark">Model Scenarios</h5>
@@ -117,9 +56,9 @@
         </div>
 
         <!-- CARD 3 -->
-        <div class="col-md-4">
+        <div class="col-md-4 animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
             <div class="glass-step-card h-100">
-                <div class="icon-box" style="background: #f3e8ff; color: #6b21a8;">
+                <div class="icon-box" style="background: #f3e8ff; color: #6b21a8; box-shadow: 0 4px 12px rgba(107, 33, 168, 0.1);">
                     <i class="bi bi-graph-up-arrow"></i>
                 </div>
                 <h5 class="fw-bold mb-3 text-dark">Analyze Forecasts</h5>
