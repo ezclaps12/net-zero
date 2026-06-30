@@ -9,9 +9,13 @@ import net0.core.scenario as scenario
 def run_scope1(target_year, target_production, intensity_val, therm_re_val,
                electrification_val, refr_growth_val, refr_red_val, conversions, baseline_year=2024, initiatives=[]):
 
-    df = dataloader.get_data_s1()
-    df = df[df["Year"] <= baseline_year].copy()
-    df = emissions.calculate_intensity(df)
+    full_df = dataloader.get_data_s1()
+
+    # Split into historical (up to baseline) and roadmap (after baseline)
+    historical_df = full_df[full_df["Year"] <= baseline_year].copy()
+    roadmap_df = full_df[full_df["Year"] > baseline_year].copy()
+
+    historical_df = emissions.calculate_intensity(historical_df)
 
     intensity_slider_value = intensity_val
     therm_renewable_slider_value = therm_re_val
@@ -19,32 +23,44 @@ def run_scope1(target_year, target_production, intensity_val, therm_re_val,
     refr_growth_rate = refr_growth_val
     refr_emission_slider_value = refr_red_val
 
-    bau_df = activity.forecast_activity_s1(df, target_year, target_production,
-                                           intensity_slider_value=0, refr_growth_rate=0)
-    forecast_df = activity.forecast_activity_s1(df, target_year, target_production,
+    fuel_cols = ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"]
+
+    # 1. Forecast dynamically from baseline to target_year
+    forecast_bau = activity.forecast_activity_s1(historical_df, target_year, target_production,
+                                                 intensity_slider_value=0, refr_growth_rate=0)
+    forecast_df = activity.forecast_activity_s1(historical_df, target_year, target_production,
                                                 intensity_slider_value, refr_growth_rate)
 
-    bau_df["Renewable_Thermal_Energy"] = df.iloc[-1]["Renewable_Thermal_Energy"]
-    fuel_cols = ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"]
-    last_share = df.iloc[-1][fuel_cols]
+    # 2. Overlay Fuel Shares and Renewable Thermal from the ledger roadmap
+    last_known_shares = historical_df.iloc[-1][fuel_cols].to_dict()
+    last_known_therm = historical_df.iloc[-1]["Renewable_Thermal_Energy"]
 
-    for fuel in fuel_cols:
-        bau_df[fuel] = last_share[fuel]
-        forecast_df[fuel] = last_share[fuel]
+    for i, row in forecast_df.iterrows():
+        year = row["Year"]
+        roadmap_match = roadmap_df[roadmap_df["Year"] == year]
+        
+        if not roadmap_match.empty:
+            for col in fuel_cols:
+                last_known_shares[col] = roadmap_match.iloc[0][col]
+            last_known_therm = roadmap_match.iloc[0]["Renewable_Thermal_Energy"]
+            
+        for col in fuel_cols:
+            forecast_df.loc[i, col] = last_known_shares[col]
+            forecast_bau.loc[i, col] = last_known_shares[col]
+            
+        forecast_df.loc[i, "Renewable_Thermal_Energy"] = 0.0 # Will be populated by scenario logic if needed
+        forecast_bau.loc[i, "Renewable_Thermal_Energy"] = last_known_therm
 
-    forecast_df["Renewable_Thermal_Energy"] = 0.0
-
-    # 1. Apply discrete initiatives first
+    # 3. Apply initiatives and sliders to the forecast
     scenario_df = scenario.apply_initiatives_s1(forecast_df, initiatives, baseline_year)
-
-    # 2. Overlay general planner sliders on top
     scenario_df = scenario.apply_renewable_thermal(scenario_df, therm_renewable_slider_value)
     scenario_df = scenario.fuel_conversion_matrix(conversions, fuel_cols, scenario_df)
     scenario_df = scenario.apply_electrification(scenario_df, electrification_slider_value)
-    scenario_df = scenario.apply_refrigerant_reduction(df, scenario_df, refr_emission_slider_value)
+    scenario_df = scenario.apply_refrigerant_reduction(historical_df, scenario_df, refr_emission_slider_value)
 
-    combined_bau_df = pd.concat([df, bau_df], ignore_index=True)
-    combined_df = pd.concat([df, scenario_df], ignore_index=True)
+    # 4. Build combined DataFrames
+    combined_bau_df = pd.concat([historical_df, forecast_bau], ignore_index=True)
+    combined_df = pd.concat([historical_df, scenario_df], ignore_index=True)
 
     print(combined_df.to_string())
     s1_bau = emissions.calculate_emissions_s1(combined_bau_df, ef.EF)

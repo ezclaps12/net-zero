@@ -99,13 +99,7 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
     fuel_cols = ["HSD", "CNG", "LPG", "Propane", "DA", "Electricity"]
     years = sorted(forecast_df["Year"].unique())
     
-    for i, year in enumerate(years):
-        if i > 0:
-            prev_year = years[i-1]
-            for col in fuel_cols:
-                forecast_df.loc[forecast_df["Year"] == year, col] = forecast_df.loc[forecast_df["Year"] == prev_year, col].values[0]
-            forecast_df.loc[forecast_df["Year"] == year, "Renewable_Thermal_Energy"] = forecast_df.loc[forecast_df["Year"] == prev_year, "Renewable_Thermal_Energy"].values[0]
-            
+    for year in years:
         year_initiatives = [init for init in initiatives if init.get('scope') == 'Scope 1' and int(init.get('year')) == year]
         
         for init in year_initiatives:
@@ -114,6 +108,7 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
             val_type = init.get('val_type', 'percentage')
             
             total_energy = forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"].values[0]
+            mask = forecast_df["Year"] >= year
             
             if itype == 'fuel_switch':
                 fuel_from = init.get('fuel_from')
@@ -126,8 +121,8 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
                         
                     current_from = forecast_df.loc[forecast_df["Year"] == year, fuel_from].values[0]
                     switch_amt = min(fraction, current_from)
-                    forecast_df.loc[forecast_df["Year"] == year, fuel_from] -= switch_amt
-                    forecast_df.loc[forecast_df["Year"] == year, fuel_to] += switch_amt
+                    forecast_df.loc[mask, fuel_from] -= switch_amt
+                    forecast_df.loc[mask, fuel_to] += switch_amt
             
             elif itype == 'capacity_expansion':
                 fuel_to = init.get('fuel_to')
@@ -138,14 +133,14 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
                             old_share = forecast_df.loc[forecast_df["Year"] == year, col].values[0]
                             old_energy = old_share * total_energy
                             new_energy = old_energy + (val if col == fuel_to else 0.0)
-                            forecast_df.loc[forecast_df["Year"] == year, col] = new_energy / new_total_energy
-                        forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = new_total_energy
+                            forecast_df.loc[mask, col] = new_energy / new_total_energy
+                        forecast_df.loc[mask, "Total_Energy"] = new_total_energy
             
             elif itype == 'energy_saving':
                 if val_type == 'absolute':
-                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = max(0.0, total_energy - val)
+                    forecast_df.loc[mask, "Total_Energy"] = (forecast_df.loc[mask, "Total_Energy"] - val).clip(lower=0.0)
                 else:
-                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - val / 100.0)
+                    forecast_df.loc[mask, "Total_Energy"] *= (1 - val / 100.0)
                 
             elif itype == 'renewable_thermal':
                 thermal_cols = ["HSD", "CNG", "LPG", "Propane", "DA"]
@@ -160,8 +155,9 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
                         renewable_energy = thermal_total * fraction * total_energy
                         reduction_fraction = fraction
                         
-                    forecast_df.loc[forecast_df["Year"] == year, "Renewable_Thermal_Energy"] += renewable_energy
-                    forecast_df.loc[forecast_df["Year"] == year, thermal_cols] *= (1 - reduction_fraction)
+                    forecast_df.loc[mask, "Renewable_Thermal_Energy"] += renewable_energy
+                    for col in thermal_cols:
+                        forecast_df.loc[mask, col] *= (1 - reduction_fraction)
 
     return forecast_df
 
@@ -169,12 +165,7 @@ def apply_initiatives_s1(forecast_df, initiatives, baseline_year):
 def apply_initiatives_s2(forecast_df, initiatives, baseline_year):
     years = sorted(forecast_df["Year"].unique())
     
-    for i, year in enumerate(years):
-        if i > 0:
-            prev_year = years[i-1]
-            forecast_df.loc[forecast_df["Year"] == year, "Grid"] = forecast_df.loc[forecast_df["Year"] == prev_year, "Grid"].values[0]
-            forecast_df.loc[forecast_df["Year"] == year, "Renewable"] = forecast_df.loc[forecast_df["Year"] == prev_year, "Renewable"].values[0]
-            
+    for year in years:
         year_initiatives = [init for init in initiatives if init.get('scope') == 'Scope 2' and int(init.get('year')) == year]
         
         for init in year_initiatives:
@@ -193,20 +184,27 @@ def apply_initiatives_s2(forecast_df, initiatives, baseline_year):
                     fraction = val / 100.0
                     
                 shift = min(fraction, current_grid)
-                forecast_df.loc[forecast_df["Year"] == year, "Grid"] -= shift
-                forecast_df.loc[forecast_df["Year"] == year, "Renewable"] += shift
+                
+                # Apply shift permanently to this year and all future years
+                mask = forecast_df["Year"] >= year
+                forecast_df.loc[mask, "Grid"] -= shift
+                forecast_df.loc[mask, "Renewable"] += shift
+                # Ensure values don't drop below 0
+                forecast_df.loc[mask, "Grid"] = forecast_df.loc[mask, "Grid"].clip(lower=0.0)
                 
             elif itype == 'electricity_saving':
+                mask = forecast_df["Year"] >= year
                 if val_type == 'absolute':
                     val_gj = val * 0.0036
-                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = max(0.0, total_energy - val_gj)
+                    forecast_df.loc[mask, "Total_Energy"] = (forecast_df.loc[mask, "Total_Energy"] - val_gj).clip(lower=0.0)
                 else:
                     fraction = val / 100.0
-                    forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] *= (1 - fraction)
+                    forecast_df.loc[mask, "Total_Energy"] *= (1 - fraction)
                     
             elif itype == 'electricity_expansion':
                 val_gj = val * 0.0036
-                forecast_df.loc[forecast_df["Year"] == year, "Total_Energy"] = total_energy + val_gj
+                mask = forecast_df["Year"] >= year
+                forecast_df.loc[mask, "Total_Energy"] += val_gj
                     
     return forecast_df
 

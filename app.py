@@ -128,7 +128,9 @@ def dashboard():
 
     # Run s2 only if user has configured it
     if s2_p is not None:
-        s2_bau, s2_scene = run_scope2(session['target_year'], session['target_prod'], *s2_p, s1=s1_scene,
+        # Only pass s1 data if scope1 was actually configured (empty_df lacks Total_Energy/Electricity columns)
+        s1_for_s2 = s1_scene if s1_p is not None else None
+        s2_bau, s2_scene = run_scope2(session['target_year'], session['target_prod'], *s2_p, s1=s1_for_s2,
                                       baseline_year=session.get('baseline_year', 2024),
                                       initiatives=session.get('initiatives', []))
     else:
