@@ -16,6 +16,14 @@
                 <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Baseline Year:</span>
                 <span class="badge bg-secondary rounded-pill px-3 py-1 ms-1 text-white" style="font-size: 0.8rem; background-color: #64748b !important;">{{ session.baseline_year }}</span>
             </div>
+            <div class="me-3">
+                <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Carbon Neutrality:</span>
+                {% if neutral_year %}
+                    <span class="badge bg-success rounded-pill px-3 py-1 ms-1 text-white" style="font-size: 0.8rem;">Achieved ({{ neutral_year }})</span>
+                {% else %}
+                    <span class="badge bg-warning rounded-pill px-3 py-1 ms-1 text-dark" style="font-size: 0.8rem;">Not Achieved</span>
+                {% endif %}
+            </div>
             <div>
                 <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Target Year:</span>
                 <span class="badge bg-primary rounded-pill px-3 py-1 ms-1 text-white" style="font-size: 0.8rem; background-color: #0f172a !important;">{{ session.target_year }}</span>

@@ -56,6 +56,7 @@
                             <select name="init_scope" id="initScope" class="form-select" onchange="toggleInitiativeFields()">
                                 <option value="Scope 1">Scope 1 (Direct)</option>
                                 <option value="Scope 2">Scope 2 (Electricity)</option>
+                                <option value="Offsets">Offsets & Carbon Credits</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -76,6 +77,9 @@
                             <option value="renewable_addition" class="s2-option d-none">Renewable Grid Procurement (PPA)</option>
                             <option value="electricity_saving" class="s2-option d-none">Electricity Consumption Saving</option>
                             <option value="electricity_expansion" class="s2-option d-none">Capacity Expansion (New Electricity Activity)</option>
+                            <!-- Offsets Types -->
+                            <option value="carbon_removal" class="offset-option d-none">Carbon Removal (CDR)</option>
+                            <option value="avoidance_credits" class="offset-option d-none">Avoidance Credits</option>
                         </select>
                     </div>
 
@@ -142,7 +146,7 @@
                                 <tr>
                                     <td class="fw-bold text-dark">{{ init.name }}</td>
                                     <td>
-                                        <span class="badge rounded-pill {% if init.scope == 'Scope 1' %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %}" style="font-size: 0.65rem; padding: 4px 8px;">
+                                        <span class="badge rounded-pill {% if init.scope == 'Scope 1' %}bg-danger-subtle text-danger{% elif init.scope == 'Scope 2' %}bg-primary-subtle text-primary{% else %}bg-success-subtle text-success{% endif %}" style="font-size: 0.65rem; padding: 4px 8px;">
                                             {{ init.scope }}
                                         </span>
                                     </td>
@@ -207,20 +211,28 @@
         // Filter options in Type dropdown based on Scope
         const s1Options = document.querySelectorAll('.s1-option');
         const s2Options = document.querySelectorAll('.s2-option');
+        const offsetOptions = document.querySelectorAll('.offset-option');
         
         if (selectedScope === 'Scope 1') {
             s1Options.forEach(opt => opt.classList.remove('d-none'));
             s2Options.forEach(opt => opt.classList.add('d-none'));
-            // Reset type if it was an s2 option
-            if (typeSelect.value === 'renewable_addition' || typeSelect.value === 'electricity_saving' || typeSelect.value === 'electricity_expansion') {
+            offsetOptions.forEach(opt => opt.classList.add('d-none'));
+            if (!typeSelect.options[typeSelect.selectedIndex].classList.contains('s1-option')) {
                 typeSelect.value = 'fuel_switch';
+            }
+        } else if (selectedScope === 'Scope 2') {
+            s1Options.forEach(opt => opt.classList.add('d-none'));
+            s2Options.forEach(opt => opt.classList.remove('d-none'));
+            offsetOptions.forEach(opt => opt.classList.add('d-none'));
+            if (!typeSelect.options[typeSelect.selectedIndex].classList.contains('s2-option')) {
+                typeSelect.value = 'renewable_addition';
             }
         } else {
             s1Options.forEach(opt => opt.classList.add('d-none'));
-            s2Options.forEach(opt => opt.classList.remove('d-none'));
-            // Reset type if it was an s1 option
-            if (typeSelect.value === 'fuel_switch' || typeSelect.value === 'energy_saving' || typeSelect.value === 'renewable_thermal' || typeSelect.value === 'capacity_expansion') {
-                typeSelect.value = 'renewable_addition';
+            s2Options.forEach(opt => opt.classList.add('d-none'));
+            offsetOptions.forEach(opt => opt.classList.remove('d-none'));
+            if (!typeSelect.options[typeSelect.selectedIndex].classList.contains('offset-option')) {
+                typeSelect.value = 'carbon_removal';
             }
         }
 
@@ -251,7 +263,7 @@
                     valLabel.innerText = "Renewable Thermal Replacement Amount (GJ)";
                 }
             }
-        } else {
+        } else if (selectedScope === 'Scope 2') {
             valUnit.innerText = 'kWh';
             valInput.placeholder = 'e.g. 100000';
             fuelGroup.classList.add('d-none');
@@ -262,6 +274,16 @@
                 valLabel.innerText = "Electricity Savings Amount (kWh)";
             } else if (selectedType === 'electricity_expansion') {
                 valLabel.innerText = "Added Electricity Quantity (kWh)";
+            }
+        } else {
+            valUnit.innerText = 'tCO2e';
+            valInput.placeholder = 'e.g. 5000';
+            fuelGroup.classList.add('d-none');
+            
+            if (selectedType === 'carbon_removal') {
+                valLabel.innerText = "Carbon Removal Amount (tCO2e)";
+            } else if (selectedType === 'avoidance_credits') {
+                valLabel.innerText = "Avoidance Credits Applied (tCO2e)";
             }
         }
     }
@@ -276,6 +298,9 @@
 }
 .bg-primary-subtle {
     background-color: #dbeafe !important;
+}
+.bg-success-subtle {
+    background-color: #dcfce7 !important;
 }
 </style>
 {% endblock %}

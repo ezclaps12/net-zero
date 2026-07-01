@@ -167,16 +167,37 @@ def dashboard():
     scene_merged = scene_merged.fillna(0.0)
     scene_merged['Total'] = scene_merged['Scope 1'] + scene_merged['Scope 2'] + scene_merged['Scope 3']
 
+    # Calculate Offsets (applied to init_year and all future years)
+    scene_merged['Offsets'] = 0.0
+    initiatives = session.get('initiatives', [])
+    for init in initiatives:
+        if init.get('scope') == 'Offsets':
+            init_year = int(init.get('year'))
+            init_val = float(init.get('value', 0))
+            scene_merged.loc[scene_merged['Year'] >= init_year, 'Offsets'] += init_val
+            
+    scene_merged['Net Emissions'] = scene_merged['Total'] - scene_merged['Offsets']
 
     fig = go.Figure()
     
     # Net Zero Pathway lines
-    fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Total'], name='Scenario Total', line=dict(color='#10b981', width=4, shape='spline')))
-    fig.add_trace(go.Scatter(x=bau_merged['Year'], y=bau_merged['Total'], name='BAU Total', line=dict(color='#ef4444', width=3, dash='dash', shape='spline')))
+    fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Net Emissions'], name='Scenario Net', line=dict(color='#10b981', width=4, shape='spline')))
+    fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Total'], name='Scenario Gross', line=dict(color='#10b981', width=2, dash='dot', shape='spline')))
+    fig.add_trace(go.Scatter(x=bau_merged['Year'], y=bau_merged['Total'], name='BAU Gross', line=dict(color='#ef4444', width=3, dash='dash', shape='spline')))
     
     fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Scope 1'], name='Scope 1: Direct', line=dict(color='#f43f5e', width=2, shape='spline')))
     fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Scope 2'], name='Scope 2: Electricity', line=dict(color='#3b82f6', width=2, shape='spline')))
     fig.add_trace(go.Scatter(x=scene_merged['Year'], y=scene_merged['Scope 3'], name='Scope 3: Value Chain', line=dict(color='#8b5cf6', width=2, shape='spline')))
+
+    neutral_year = None
+    for _, row in scene_merged.iterrows():
+        if row['Net Emissions'] <= 0:
+            neutral_year = int(row['Year'])
+            break
+            
+    if neutral_year:
+        fig.add_vline(x=neutral_year, line_width=2, line_dash="dash", line_color="#10b981", 
+                      annotation_text=f"Net Zero Achieved ({neutral_year})", annotation_position="top left")
 
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
@@ -241,7 +262,10 @@ def dashboard():
                            target_emissions=target_emissions,
                            target_bau=target_bau,
                            reduction_pct=reduction_pct,
-                           scope_data=scope_data)
+                           scope_data=scope_data,
+                           base_yr=base_yr,
+                           target_yr=target_yr,
+                           neutral_year=neutral_year)
 
 
 @app.route('/dashboard/setup', methods=['GET', 'POST'])
