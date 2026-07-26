@@ -47,7 +47,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Initiative Name</label>
-                        <input type="text" name="init_name" class="form-control" placeholder="e.g. Forklift Electrification" required>
+                        <input type="text" name="init_name" class="form-control" placeholder="" required>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -241,7 +241,7 @@
         // Show/hide fuel switch selector group and update labels dynamically
         if (selectedScope === 'Scope 1') {
             valUnit.innerText = 'GJ';
-            valInput.placeholder = 'e.g. 5000';
+            valInput.placeholder = '';
             
             if (selectedType === 'fuel_switch') {
                 fuelGroup.classList.remove('d-none');

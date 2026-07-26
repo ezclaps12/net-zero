@@ -6,6 +6,7 @@ from net0.core.dataloader import get_data_s1, get_data_s2
 from net0.scope.scope1 import run_scope1
 from net0.scope.scope2 import run_scope2
 from net0.scope.scope3.manager import run_scope3
+from net0.core.ev_model import calculate_ev_transition
 
 app = Flask(__name__)
 app.secret_key = 'ashok_leyland_net0_key'
@@ -523,6 +524,160 @@ def scope3_page():
         s3_scene_json = px.line(scene, x='Year', y='Emissions').update_xaxes(type='linear').to_json()
 
     return render_template('scope3.html', s3_bau_json=s3_bau_json, s3_scenario_json=s3_scene_json, form_data=form_data)
+
+
+@app.route('/dashboard/ev-modelling', methods=['GET', 'POST'])
+def ev_modelling_page():
+    if not session.get('initialized'):
+        # Allow default initialization if user navigates directly
+        session['target_year'] = 2035
+        session['target_prod'] = 15000
+        session['initialized'] = True
+
+    default_params = {
+        'start_year': session.get('baseline_year', 2024),
+        'end_year': session.get('target_year', 2035),
+        'diesel_rate_g_km': 585.26,
+        'lifetime_km': 1000000.0,
+        'ev_kwh_km': 1.1,
+        'grid_ef_start': 0.716,
+        'grid_ef_end': 0.350,
+        'diesel_start_prod': 9000,
+        'diesel_end_prod': 5000,
+        'ev_start_prod': 1000,
+        'ev_end_prod': 10000
+    }
+
+    params = session.get('ev_modelling_params', default_params).copy()
+
+    if request.method == 'POST':
+        try:
+            params['start_year'] = int(request.form.get('start_year', params['start_year']))
+            params['end_year'] = int(request.form.get('end_year', params['end_year']))
+            params['diesel_rate_g_km'] = float(request.form.get('diesel_rate_g_km', params['diesel_rate_g_km']))
+            params['lifetime_km'] = float(request.form.get('lifetime_km', params['lifetime_km']))
+            params['ev_kwh_km'] = float(request.form.get('ev_kwh_km', params['ev_kwh_km']))
+            params['grid_ef_start'] = float(request.form.get('grid_ef_start', params['grid_ef_start']))
+            
+            grid_end_val = request.form.get('grid_ef_end')
+            if not grid_end_val or not grid_end_val.strip():
+                grid_end_val = request.form.get('grid_ef_end_slider', params['grid_ef_end'])
+            params['grid_ef_end'] = float(grid_end_val)
+            
+            params['diesel_start_prod'] = int(request.form.get('diesel_start_prod', params['diesel_start_prod']))
+            params['diesel_end_prod'] = int(request.form.get('diesel_end_prod', params['diesel_end_prod']))
+            params['ev_start_prod'] = int(request.form.get('ev_start_prod', params['ev_start_prod']))
+            params['ev_end_prod'] = int(request.form.get('ev_end_prod', params['ev_end_prod']))
+            
+            session['ev_modelling_params'] = params
+        except (ValueError, TypeError):
+            pass
+
+    df = calculate_ev_transition(
+        start_year=params['start_year'],
+        end_year=params['end_year'],
+        diesel_rate_g_km=params['diesel_rate_g_km'],
+        lifetime_km=params['lifetime_km'],
+        ev_kwh_km=params['ev_kwh_km'],
+        grid_ef_start=params['grid_ef_start'],
+        grid_ef_end=params['grid_ef_end'],
+        diesel_start_prod=params['diesel_start_prod'],
+        diesel_end_prod=params['diesel_end_prod'],
+        ev_start_prod=params['ev_start_prod'],
+        ev_end_prod=params['ev_end_prod']
+    )
+
+    import plotly.graph_objects as go
+
+    years_list = df['Year'].tolist()
+
+    # Chart 1: Diesel Fleet Lifetime Emissions
+    fig_diesel = go.Figure()
+    fig_diesel.add_trace(go.Scatter(
+        x=years_list, y=df['Diesel_Emissions'].tolist(),
+        mode='lines+markers', name='Diesel Fleet Emissions',
+        line=dict(color='#ef4444', width=3),
+        fill='tozeroy', fillcolor='rgba(239, 68, 68, 0.08)'
+    ))
+    fig_diesel.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Outfit, sans-serif', color='#475569'),
+        margin=dict(t=20, r=20, l=50, b=40),
+        xaxis=dict(gridcolor='#f1f5f9', title='Year', tickmode='linear', dtick=1),
+        yaxis=dict(gridcolor='#f1f5f9', title='Emissions (tCO2e)')
+    )
+
+    # Chart 2: EV Fleet Lifetime Emissions
+    fig_ev = go.Figure()
+    fig_ev.add_trace(go.Scatter(
+        x=years_list, y=df['EV_Emissions'].tolist(),
+        mode='lines+markers', name='EV Fleet Emissions',
+        line=dict(color='#3b82f6', width=3),
+        fill='tozeroy', fillcolor='rgba(59, 130, 246, 0.08)'
+    ))
+    fig_ev.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Outfit, sans-serif', color='#475569'),
+        margin=dict(t=20, r=20, l=50, b=40),
+        xaxis=dict(gridcolor='#f1f5f9', title='Year', tickmode='linear', dtick=1),
+        yaxis=dict(gridcolor='#f1f5f9', title='Emissions (tCO2e)')
+    )
+
+    # Chart 3: Combined Total Fleet Emissions vs Baseline
+    fig_combined = go.Figure()
+    fig_combined.add_trace(go.Scatter(
+        x=years_list, y=df['BAU_Emissions'].tolist(),
+        mode='lines', name='Baseline Static Fleet (No EV Transition)',
+        line=dict(color='#94a3b8', width=2, dash='dash')
+    ))
+    fig_combined.add_trace(go.Scatter(
+        x=years_list, y=df['Diesel_Emissions'].tolist(),
+        mode='lines+markers', name='Diesel Fleet Contribution',
+        line=dict(color='#ef4444', width=2, dash='dot')
+    ))
+    fig_combined.add_trace(go.Scatter(
+        x=years_list, y=df['EV_Emissions'].tolist(),
+        mode='lines+markers', name='EV Fleet Contribution',
+        line=dict(color='#3b82f6', width=2, dash='dot')
+    ))
+    fig_combined.add_trace(go.Scatter(
+        x=years_list, y=df['Combined_Emissions'].tolist(),
+        mode='lines+markers', name='Net Combined Pathway',
+        line=dict(color='#10b981', width=4)
+    ))
+    fig_combined.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Outfit, sans-serif', color='#475569'),
+        margin=dict(t=20, r=20, l=50, b=40),
+        xaxis=dict(gridcolor='#f1f5f9', title='Year', tickmode='linear', dtick=1),
+        yaxis=dict(gridcolor='#f1f5f9', title='Emissions (tCO2e)'),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+
+    total_avoided = float((df['BAU_Emissions'] - df['Combined_Emissions']).sum())
+    base_em = float(df['Combined_Emissions'].iloc[0])
+    end_em = float(df['Combined_Emissions'].iloc[-1])
+    bau_end_em = float(df['BAU_Emissions'].iloc[-1])
+    target_reduction_pct = float(((bau_end_em - end_em) / bau_end_em * 100)) if bau_end_em > 0 else 0.0
+    final_ev_share = float((df['EV_Prod'].iloc[-1] / df['Total_Prod'].iloc[-1] * 100)) if df['Total_Prod'].iloc[-1] > 0 else 0.0
+    unit_diesel_em = float(df['Diesel_Unit_Emissions'].iloc[0])
+    unit_ev_end_em = float(df['EV_Unit_Emissions'].iloc[-1])
+
+    table_rows = df.to_dict(orient='records')
+
+    return render_template(
+        'ev_modelling.html',
+        params=params,
+        table_rows=table_rows,
+        total_avoided=total_avoided,
+        target_reduction_pct=target_reduction_pct,
+        final_ev_share=final_ev_share,
+        unit_diesel_em=unit_diesel_em,
+        unit_ev_end_em=unit_ev_end_em,
+        fig_diesel_json=fig_diesel.to_json(),
+        fig_ev_json=fig_ev.to_json(),
+        fig_combined_json=fig_combined.to_json()
+    )
 
 
 @app.route('/dashboard/reset')

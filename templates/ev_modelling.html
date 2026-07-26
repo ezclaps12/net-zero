@@ -1,0 +1,259 @@
+{% extends "layout.html" %}
+
+{% block title %}EV Transition Modelling - Net Zero Scenario Planner{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- HEADER TITLE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1" style="color: #0f172a;">Fleet EV Transition Modelling</h4>
+            <p class="text-secondary small mb-0" style="color: #64748b !important;">
+                Simulate fleet decarbonization as production shifts from Diesel to Electric Vehicles under grid decarbonization pathways.
+            </p>
+        </div>
+        <div>
+            <a href="/dashboard" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-bold" style="font-size: 0.85rem;">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard Overview
+            </a>
+        </div>
+    </div>
+
+    <!-- SUMMARY KPI METRIC CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 text-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Total Carbon Avoided</span>
+                <h4 class="fw-bold text-success mt-2 mb-0">{{ "{:,.0f}".format(total_avoided) }} <small class="fs-6 text-muted">tCO2e</small></h4>
+                <span class="badge bg-success-subtle text-success mt-2 rounded-pill px-2 py-1" style="font-size: 0.7rem;">Cumulative Savings</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 text-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Target Horizon Reduction</span>
+                <h4 class="fw-bold text-primary mt-2 mb-0">{{ "{:.1f}%".format(target_reduction_pct) }}</h4>
+                <span class="badge bg-primary-subtle text-primary mt-2 rounded-pill px-2 py-1" style="font-size: 0.7rem;">vs. Target BAU Fleet</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 text-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Final Year EV Share</span>
+                <h4 class="fw-bold text-info mt-2 mb-0">{{ "{:.1f}%".format(final_ev_share) }}</h4>
+                <span class="badge bg-info-subtle text-info mt-2 rounded-pill px-2 py-1" style="font-size: 0.7rem;">{{ "{:,}".format(params.ev_end_prod) }} EV Units/yr</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 glass-card p-3 text-center">
+                <span class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Unit Emissions Comparison</span>
+                <div class="d-flex justify-content-around mt-2">
+                    <div>
+                        <span class="d-block small text-muted">Diesel Bus</span>
+                        <strong class="text-danger">{{ "{:,.1f}".format(unit_diesel_em) }} t</strong>
+                    </div>
+                    <div class="border-end"></div>
+                    <div>
+                        <span class="d-block small text-muted">EV Bus (End Grid)</span>
+                        <strong class="text-success">{{ "{:,.1f}".format(unit_ev_end_em) }} t</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID: FORM INPUTS + PLOTS -->
+    <div class="row g-4 mb-4">
+        
+        <!-- PARAMETER CONTROLS PANEL -->
+        <div class="col-lg-4">
+            <div class="card border-0 glass-card p-4">
+                <h6 class="fw-bold mb-3" style="color: #0f172a;">Simulation Parameters</h6>
+                <form method="POST" action="/dashboard/ev-modelling">
+                    
+                    <!-- TIMELINE -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Start Year</label>
+                            <input type="number" name="start_year" class="form-control" value="{{ params.start_year }}" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.65rem;">Target Year</label>
+                            <input type="number" name="end_year" class="form-control" value="{{ params.end_year }}" required>
+                        </div>
+                    </div>
+
+                    <!-- VEHICLE SPECS -->
+                    <div class="border-top pt-3 mb-3">
+                        <span class="d-block fw-bold text-dark small mb-2">Vehicle Specifications</span>
+                        
+                        <div class="mb-2">
+                            <label class="form-label small text-secondary mb-1">Diesel Emission Rate (gCO2/km)</label>
+                            <input type="number" step="any" name="diesel_rate_g_km" class="form-control form-control-sm" value="{{ params.diesel_rate_g_km }}" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small text-secondary mb-1">Operating Lifetime Distance (km)</label>
+                            <input type="number" step="any" name="lifetime_km" class="form-control form-control-sm" value="{{ params.lifetime_km }}" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small text-secondary mb-1">EV Energy Consumption (kWh/km)</label>
+                            <input type="number" step="any" name="ev_kwh_km" class="form-control form-control-sm" value="{{ params.ev_kwh_km }}" required>
+                        </div>
+                    </div>
+
+                    <!-- GRID DECARBONIZATION -->
+                    <div class="border-top pt-3 mb-3">
+                        <span class="d-block fw-bold text-dark small mb-2">Grid Decarbonization</span>
+                        
+                        <div class="mb-2">
+                            <label class="form-label small text-secondary mb-1">Baseline Grid EF (kgCO2/kWh)</label>
+                            <input type="number" step="any" name="grid_ef_start" class="form-control form-control-sm" value="{{ params.grid_ef_start }}" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label small text-secondary mb-1">Target Year Grid EF (kgCO2/kWh)</label>
+                                <span class="fw-bold text-success small" id="gridEfValDisplay">{{ params.grid_ef_end }}</span>
+                            </div>
+                            <input type="range" class="form-range" name="grid_ef_end_slider" id="gridEfSlider" min="0.0" max="{{ params.grid_ef_start }}" step="0.001" value="{{ params.grid_ef_end }}" oninput="syncGridEf(this.value)">
+                            <input type="number" step="any" name="grid_ef_end" id="gridEfInput" class="form-control form-control-sm mt-1" value="{{ params.grid_ef_end }}" oninput="syncGridSlider(this.value)" required>
+                        </div>
+                    </div>
+
+                    <!-- PRODUCTION VOLUMES -->
+                    <div class="border-top pt-3 mb-3">
+                        <span class="d-block fw-bold text-dark small mb-2">Annual Production Targets</span>
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small text-secondary mb-1">Start Diesel Units</label>
+                                <input type="number" name="diesel_start_prod" class="form-control form-control-sm" value="{{ params.diesel_start_prod }}" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-secondary mb-1">Target Diesel Units</label>
+                                <input type="number" name="diesel_end_prod" class="form-control form-control-sm" value="{{ params.diesel_end_prod }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small text-secondary mb-1">Start EV Units</label>
+                                <input type="number" name="ev_start_prod" class="form-control form-control-sm" value="{{ params.ev_start_prod }}" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-secondary mb-1">Target EV Units</label>
+                                <input type="number" name="ev_end_prod" class="form-control form-control-sm" value="{{ params.ev_end_prod }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold">
+                        <i class="bi bi-arrow-repeat me-1"></i> Update Simulation
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3 VISUAL CHARTS PANEL -->
+        <div class="col-lg-8">
+            
+            <!-- GRAPH 1: DIESEL EMISSIONS -->
+            <div class="card border-0 glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">1. Diesel Vehicle Fleet Lifetime Emissions</h6>
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1" style="font-size: 0.7rem;">Phasing Down</span>
+                </div>
+                <p class="text-secondary small mb-3">Total lifetime emissions generated by annual Diesel production output.</p>
+                <div id="chartDiesel" style="height: 280px;"></div>
+            </div>
+
+            <!-- GRAPH 2: EV EMISSIONS -->
+            <div class="card border-0 glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">2. Electric Vehicle Fleet Lifetime Emissions</h6>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" style="font-size: 0.7rem;">Phasing Up + Grid Decarbonization</span>
+                </div>
+                <p class="text-secondary small mb-3">Lifetime emissions from EV charging as EV volume expands and grid decarbonizes.</p>
+                <div id="chartEv" style="height: 280px;"></div>
+            </div>
+
+            <!-- GRAPH 3: COMBINED & NET TRAJECTORY -->
+            <div class="card border-0 glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0" style="color: #0f172a;">3. Combined Fleet Total Emissions Trajectory</h6>
+                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1" style="font-size: 0.7rem;">Net Decarbonization Pathway</span>
+                </div>
+                <p class="text-secondary small mb-3">Total combined emissions (Diesel + EV) compared against the static baseline fleet pathway.</p>
+                <div id="chartCombined" style="height: 320px;"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DETAILED DATA TABLE -->
+    <div class="card border-0 glass-card p-4 mb-4">
+        <h6 class="fw-bold mb-3" style="color: #0f172a;">Yearly Simulation Breakdown Table</h6>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Year</th>
+                        <th>Diesel Units</th>
+                        <th>EV Units</th>
+                        <th>Total Production</th>
+                        <th>Grid EF (kg/kWh)</th>
+                        <th>Diesel Fleet Emissions (tCO2e)</th>
+                        <th>EV Fleet Emissions (tCO2e)</th>
+                        <th>Combined Total (tCO2e)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_rows %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ row.Year }}</td>
+                        <td>{{ "{:,}".format(row.Diesel_Prod) }}</td>
+                        <td><span class="badge bg-info-subtle text-info fw-bold">{{ "{:,}".format(row.EV_Prod) }}</span></td>
+                        <td class="fw-bold text-dark">{{ "{:,}".format(row.Total_Prod) }}</td>
+                        <td><code>{{ row.Grid_EF }}</code></td>
+                        <td class="text-danger fw-bold">{{ "{:,.1f}".format(row.Diesel_Emissions) }}</td>
+                        <td class="text-primary fw-bold">{{ "{:,.1f}".format(row.EV_Emissions) }}</td>
+                        <td class="text-success fw-bold">{{ "{:,.1f}".format(row.Combined_Emissions) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Plotly JS -->
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script>
+    function syncGridEf(val) {
+        document.getElementById('gridEfValDisplay').innerText = val;
+        document.getElementById('gridEfInput').value = val;
+    }
+    function syncGridSlider(val) {
+        document.getElementById('gridEfValDisplay').innerText = val;
+        document.getElementById('gridEfSlider').value = val;
+    }
+
+    const chartDieselData = {{ fig_diesel_json | safe }};
+    const chartEvData = {{ fig_ev_json | safe }};
+    const chartCombinedData = {{ fig_combined_json | safe }};
+
+    Plotly.newPlot('chartDiesel', chartDieselData.data, chartDieselData.layout, {responsive: true});
+    Plotly.newPlot('chartEv', chartEvData.data, chartEvData.layout, {responsive: true});
+    Plotly.newPlot('chartCombined', chartCombinedData.data, chartCombinedData.layout, {responsive: true});
+</script>
+
+<style>
+.bg-danger-subtle { background-color: #ffe4e6 !important; }
+.bg-primary-subtle { background-color: #dbeafe !important; }
+.bg-success-subtle { background-color: #dcfce7 !important; }
+.bg-info-subtle { background-color: #e0f2fe !important; }
+</style>
+{% endblock %}

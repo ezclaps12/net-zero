@@ -66,6 +66,12 @@
                             </a>
                         </li>
 
+                        <li class="nav-item px-2">
+                            <a class="nav-link {% if request.path == '/dashboard/ev-modelling' %}active{% endif %}" href="/dashboard/ev-modelling">
+                                <i class="bi bi-ev-front me-1"></i> EV Modelling
+                            </a>
+                        </li>
+
                         <!-- Scope Dropdown -->
                         <li class="nav-item dropdown px-2">
                             <a class="nav-link dropdown-toggle {% if 'scope' in request.path %}active{% endif %}" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
